@@ -1,0 +1,29 @@
+# Dependências
+node_modules/
+.npm
+
+# Ambiente (NUNCA commitar chaves)
+server/.env
+.env
+*.env
+
+# Banco local (não vai pro repo)
+server/database.sqlite
+*.sqlite
+*.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Backups e ZIPs
+*.zip
+*.bak
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp

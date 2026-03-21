@@ -1,0 +1,2710 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IdeaOrganizer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="config.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    * {
+      font-family: 'Inter', sans-serif;
+      letter-spacing: -0.015em;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #000000;
+      color: #fafafa;
+    }
+
+    .sidebar {
+      background: #09090b;
+      border-right: 1px solid #27272a;
+    }
+
+    .card {
+      background: #09090b;
+      border: 1px solid #27272a;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .card:hover {
+      border-color: #52525b;
+      background: #141417;
+    }
+
+    .input-area {
+      background: #09090b;
+      border: 1px solid #27272a;
+      transition: border-color 0.2s;
+    }
+
+    .input-area:focus-within {
+      border-color: #a1a1aa;
+    }
+
+    /* Badges Minimalistas */
+    .badge-feature {
+      background: #18181b;
+      color: #e4e4e7;
+      border: 1px solid #3f3f46;
+    }
+
+    .badge-ux {
+      background: #18181b;
+      color: #d4d4d8;
+      border: 1px solid #3f3f46;
+    }
+
+    .badge-tech {
+      background: #052e16;
+      color: #34d399;
+      border: 1px solid #064e3b;
+    }
+
+    .badge-negocio {
+      background: #422006;
+      color: #fbbf24;
+      border: 1px solid #78350f;
+    }
+
+    .badge-marketing {
+      background: #450a0a;
+      color: #f87171;
+      border: 1px solid #7f1d1d;
+    }
+
+    .badge-processos {
+      background: #18181b;
+      color: #fdba74;
+      border: 1px solid #3f3f46;
+    }
+
+    .badge-outro {
+      background: #18181b;
+      color: #a1a1aa;
+      border: 1px solid #3f3f46;
+    }
+
+    .proj-btn {
+      transition: all 0.15s;
+      cursor: pointer;
+    }
+
+    .proj-btn:hover {
+      background: #18181b;
+    }
+
+    .proj-btn.active {
+      background: #18181b;
+      border-left: 3px solid #fafafa;
+    }
+
+    .spin {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .slide-up {
+      animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    textarea:focus {
+      outline: none;
+    }
+
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #000000;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #27272a;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #52525b;
+    }
+
+    .idea-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .board-column {
+      min-width: 320px;
+      max-width: 320px;
+      background: #09090b;
+      border: 1px solid #27272a;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .board-column-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid #27272a;
+      font-weight: 600;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      color: #e4e4e7;
+    }
+
+    .board-column-content {
+      padding: 12px;
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none;
+      }
+
+      .sidebar.open {
+        display: flex;
+        position: fixed;
+        inset: 0;
+        z-index: 40;
+        width: 280px;
+      }
+    }
+  </style>
+</head>
+
+<body class="flex h-screen overflow-hidden" style="background:#000000;">
+
+  <!-- TELA DE LOGIN / BLOQUEIO DE SEGURANÇA -->
+  <div id="login-overlay" class="fixed inset-0 z-[100] flex items-center justify-center bg-black">
+    <div class="card p-8 rounded-2xl w-full max-w-sm flex flex-col items-center gap-4 text-center">
+      <div class="text-4xl mb-2">💡</div>
+      <h2 class="text-xl font-bold text-white">Quartel General IA</h2>
+      <p class="text-sm text-zinc-400 mb-2">Acesso restrito. Insira sua chave de comando.</p>
+
+      <input type="password" id="senha-admin" placeholder="••••••••"
+        class="w-full bg-[#000000] border border-[#27272a] rounded-lg px-4 py-3 text-sm text-zinc-300 focus:outline-none focus:border-zinc-500 text-center tracking-widest">
+
+      <button onclick="validarAcesso()"
+        class="w-full mt-2 text-sm px-4 py-3 rounded-lg bg-white text-black hover:bg-zinc-200 transition font-bold">
+        Desbloquear Painel
+      </button>
+      <p id="erro-senha" class="text-xs text-red-500 mt-2 hidden">Senha incorreta. Tente novamente.</p>
+    </div>
+  </div>
+
+  <script>
+    // Sistema básico de Proteção (Lado Cliente)
+    function validarAcesso() {
+      const senha = document.getElementById('senha-admin').value;
+      // Senha definida hardcoded para acesso da Priscila
+      if (senha === 'admin123' || senha === 'ideia2026') {
+        document.getElementById('login-overlay').style.display = 'none';
+        // Salvar na sessao para nao ficar pedindo toda vez que der F5 na mesma aba
+        sessionStorage.setItem('io_auth', 'unlocked');
+      } else {
+        const err = document.getElementById('erro-senha');
+        err.classList.remove('hidden');
+        setTimeout(() => err.classList.add('hidden'), 3000);
+      }
+    }
+
+    // Verifica se já estava logado na sessão ao abrir
+    if (sessionStorage.getItem('io_auth') === 'unlocked') {
+      document.getElementById('login-overlay').style.display = 'none';
+    }
+
+    // Permitir "Enter" no input de senha
+    document.getElementById('senha-admin').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        validarAcesso();
+      }
+    });
+  </script>
+
+  <!-- CONTEÚDO REAL DO APP (Oculto sob o overlay) -->
+  <!-- SIDEBAR -->
+  <aside class="sidebar flex flex-col w-64 shrink-0 h-screen overflow-hidden">
+    <div class="p-4 border-b border-[#27272a]">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="text-xl">💡</span>
+        <h1 class="font-bold text-base text-white">IdeaOrganizer</h1>
+      </div>
+      <p class="text-xs text-zinc-400">Captura ideias. IA organiza.</p>
+    </div>
+
+    <!-- Projetos & Agentes -->
+    <div class="flex-1 overflow-y-auto p-3 space-y-1">
+      <div class="flex items-center justify-between px-2 mb-2 mt-2">
+        <span class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Meu Squad</span>
+        <button onclick="abrirModalAgentes()" class="text-zinc-400 hover:text-white text-lg leading-none"
+          title="Gerenciar Agentes">⚙</button>
+      </div>
+      <div class="flex items-center justify-between px-2 mb-2 mt-4">
+        <span
+          class="text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1"><span>📚</span>
+          Skills Hub</span>
+        <button onclick="abrirModalSkills()" class="text-zinc-400 hover:text-white text-lg leading-none transition"
+          title="Gerenciar Base de Skills">⚙</button>
+      </div>
+      <div class="flex items-center justify-between px-2 mb-2 mt-4">
+        <span class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Projetos</span>
+        <button onclick="novoProjetoModal()" class="text-zinc-400 hover:text-white text-lg leading-none"
+          title="Novo projeto">+</button>
+      </div>
+      <div onclick="selecionarProjeto(null)"
+        class="proj-btn px-3 py-2 rounded-lg text-sm text-zinc-300 flex items-center gap-2" id="proj-btn-todas">
+        <span>🗂</span> Todas as ideias
+        <span id="badge-todas" class="ml-auto text-xs bg-zinc-800 text-zinc-300 px-1.5 py-0.5 rounded-full"></span>
+      </div>
+      <div id="lista-projetos"></div>
+    </div>
+
+    <!-- Config inline -->
+    <div class="p-3 border-t border-[#27272a] space-y-3">
+
+      <!-- Provedor ativo -->
+      <div>
+        <p class="text-xs text-zinc-500 px-1 mb-1">IA ativa</p>
+        <select id="provedor-sidebar" onchange="trocarProvedor()"
+          class="w-full bg-black border border-[#27272a] rounded-lg px-2 py-1.5 text-xs text-zinc-300 focus:outline-none focus:border-zinc-500 mb-2">
+          <option value="gemini">Gemini (Google)</option>
+          <option value="openai">OpenAI (ChatGPT)</option>
+          <option value="groq">Groq (Llama)</option>
+          <option value="anthropic">Claude (Anthropic)</option>
+        </select>
+        <button onclick="abrirConfig()"
+          class="w-full text-left px-3 py-2 rounded-lg text-xs text-zinc-300 bg-[#09090b] border border-[#27272a] hover:bg-[#18181b] flex items-center gap-2 transition">
+          ⚙️ Configurar Chaves API
+        </button>
+      </div>
+
+      <div id="api-status" class="hidden text-xs px-1 text-center py-1"></div>
+
+      <button onclick="exportarTudo()"
+        class="w-full text-left px-3 py-2 rounded-lg text-xs text-zinc-400 hover:bg-[#18181b] flex items-center gap-2 transition">
+        ↓ Exportar tudo
+      </button>
+    </div>
+  </aside>
+
+  <!-- PAINEL CO-CRIAÇÃO -->
+  <div id="painel-chat" class="hidden flex-col w-96 shrink-0 border-l border-[#27272a] bg-black overflow-hidden"
+    style="max-width:420px">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-[#27272a]">
+      <div>
+        <h3 class="font-semibold text-sm text-white">Agente Co-criador</h3>
+        <p class="text-xs text-zinc-400">Ele pergunta, avalia e melhora sua ideia</p>
+      </div>
+      <button onclick="fecharChat()" class="text-zinc-500 hover:text-white text-lg transition">✕</button>
+    </div>
+
+    <div id="chat-mensagens" class="flex-1 overflow-y-auto p-4 space-y-3">
+      <div class="bg-zinc-900 rounded-xl p-3 border border-zinc-800">
+        <p class="text-xs text-zinc-300 leading-relaxed">
+          Olá! Sou seu agente co-criador. Você pode me contar uma ideia de app e eu vou <strong>fazer
+            perguntas</strong>, <strong>avaliar</strong>, buscar <strong>referências de mercado</strong> e
+          <strong>propor melhorias</strong>. Pode começar falando qualquer ideia!
+        </p>
+      </div>
+    </div>
+
+    <div class="p-3 border-t border-[#27272a]">
+      <div class="bg-[#09090b] rounded-xl border border-[#27272a] focus-within:border-zinc-500 p-3">
+        <textarea id="chat-input" rows="2" placeholder="Fale ou escreva sua ideia... (Enter para enviar)"
+          class="w-full bg-transparent text-xs text-white placeholder-zinc-500 resize-none focus:outline-none"
+          onkeydown="handleChatKeydown(event)"></textarea>
+        <div class="flex items-center gap-2 mt-2">
+          <button onclick="toggleVozChat()" id="btn-voz-chat"
+            class="text-xs px-2 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition text-zinc-300">🎙
+            Falar</button>
+          <button onclick="limparChat()" class="text-xs text-zinc-500 hover:text-zinc-300 transition ml-auto">Limpar
+            conversa</button>
+          <button onclick="enviarChatMensagem()"
+            class="text-xs px-4 py-1.5 rounded-lg bg-white text-black hover:bg-zinc-200 transition font-semibold">Enviar</button>
+        </div>
+      </div>
+      <button onclick="salvarIdeiaDoChat()"
+        class="mt-2 w-full text-xs py-2 rounded-xl border border-zinc-800 text-zinc-300 hover:bg-zinc-800 transition">
+        ✦ Salvar ideia desenvolvida no board
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <div class="flex-1 flex flex-col overflow-hidden bg-[#000000]">
+
+    <!-- Top bar -->
+    <div class="flex items-center gap-3 px-5 py-3 border-b border-[#27272a] shrink-0 bg-[#09090b]">
+      <button onclick="toggleSidebar()" class="md:hidden text-zinc-400 text-xl">☰</button>
+      <div class="flex-1">
+        <h2 id="titulo-area" class="font-semibold text-white text-sm">Todas as ideias</h2>
+        <p id="subtitulo-area" class="text-xs text-zinc-400">Selecione um projeto ou capture uma nova ideia</p>
+      </div>
+
+      <!-- Controles de Visualização -->
+      <div class="flex bg-[#18181b] rounded-lg p-1 border border-[#27272a]">
+        <button id="btn-view-grid" onclick="mudarVisualizacao('grid')"
+          class="px-2.5 py-1 text-xs rounded-md bg-zinc-700 text-white shadow-sm transition"
+          title="Exibição em Grid">🔲</button>
+        <button id="btn-view-list" onclick="mudarVisualizacao('list')"
+          class="px-2.5 py-1 text-xs rounded-md text-zinc-400 hover:text-zinc-200 transition"
+          title="Exibição em Lista">📋</button>
+        <button id="btn-view-board" onclick="mudarVisualizacao('board')"
+          class="px-2.5 py-1 text-xs rounded-md text-zinc-400 hover:text-zinc-200 transition"
+          title="Exibição Kanban">🗓️</button>
+      </div>
+
+      <div class="flex gap-2 items-center">
+        <button onclick="abrirChat()"
+          class="text-xs px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition text-zinc-200 flex items-center gap-1.5 border border-zinc-700">
+          <span>🤖</span> Co-criar ideia
+        </button>
+        <select id="filtro-tipo" onchange="renderizarIdeias()"
+          class="text-xs bg-[#09090b] border border-[#27272a] rounded-lg px-2 py-1.5 text-zinc-300 focus:outline-none">
+          <option value="">Todos os tipos</option>
+          <option value="feature">Feature</option>
+          <option value="ux">UX / Tela</option>
+          <option value="tech">Tech / Arquitetura</option>
+          <option value="negocio">Negócio / Produto</option>
+          <option value="marketing">Marketing / Growth</option>
+          <option value="processos">Processos / Operações</option>
+          <option value="outro">Outro</option>
+        </select>
+        <input id="campo-busca" onkeyup="renderizarIdeias()" type="search" placeholder="Buscar..."
+          class="text-xs bg-[#09090b] border border-[#27272a] rounded-lg px-3 py-1.5 text-zinc-300 focus:outline-none focus:border-zinc-500 w-36" />
+      </div>
+    </div>
+
+    <!-- Área de ideias -->
+    <div class="flex-1 overflow-y-auto p-5">
+      <div id="area-vazia"
+        class="hidden flex flex-col items-center justify-center h-full text-center p-6 max-w-3xl mx-auto">
+        <div class="text-6xl mb-4 opacity-30 grayscale">💡</div>
+        <h3 class="text-xl font-bold text-white mb-2">Bem-vindo ao IdeaOrganizer (Fábrica Autônoma)</h3>
+        <p class="text-zinc-400 text-sm mb-6 max-w-2xl leading-relaxed">
+          Esta não é apenas uma ferramenta de anotações. É um **Orquestrador de Agentes IA** projetado para refinar suas
+          ideias e gerar pacotes de código prontos para o <strong class="text-zinc-200">Antigravity</strong> e <strong
+            class="text-zinc-200">MCPs</strong> (Claude Code / Gemini Code).
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-left w-full mb-6">
+          <div class="bg-[#09090b] border border-[#27272a] p-4 rounded-xl">
+            <div class="text-xl mb-2">1️⃣</div>
+            <h4 class="text-sm font-bold text-zinc-200 mb-1">Capture a Ideia</h4>
+            <p class="text-xs text-zinc-500">Escreva ou grave um áudio com um simples prompt. O sistema entende o
+              contexto e cria um projeto base.</p>
+          </div>
+          <div class="bg-[#09090b] border border-[#27272a] p-4 rounded-xl">
+            <div class="text-xl mb-2">2️⃣</div>
+            <h4 class="text-sm font-bold text-zinc-200 mb-1">Orquestração Dinâmica</h4>
+            <p class="text-xs text-zinc-500">O <strong>Arquiteto Mestre</strong> no backend (node) decide quais
+              especialistas (Design, Backend, BD) precisam debater sobre a sua ideia usando os <strong>Skills</strong>
+              locais.</p>
+          </div>
+          <div class="bg-[#09090b] border border-[#27272a] p-4 rounded-xl">
+            <div class="text-xl mb-2">3️⃣</div>
+            <h4 class="text-sm font-bold text-zinc-200 mb-1">Tradutor Antigravity</h4>
+            <p class="text-xs text-zinc-500">Ao final da fábrica, você recebe um Blueprint Master e comandos prontos
+              para plugar direto no seu CLI do Antigravity para iniciar a codificação autônoma.</p>
+          </div>
+        </div>
+        <p class="text-zinc-500 text-xs mt-1">Use o campo abaixo para capturar sua primeira ideia e iniciar o processo.
+        </p>
+      </div>
+      <div id="loading-global" class="hidden flex flex-col items-center justify-center h-full">
+        <div
+          class="flex items-center gap-3 bg-[#09090b] rounded-2xl px-6 py-5 border border-[#27272a] shadow-2xl shadow-black">
+          <div class="w-5 h-5 border-2 border-zinc-400 border-t-transparent rounded-full spin"></div>
+          <div>
+            <p class="text-sm text-white font-medium" id="loading-msg">Orquestrador analisando...</p>
+            <p class="text-xs text-zinc-400 mt-0.5" id="loading-sub">Identificando projeto e tipo de ideia</p>
+          </div>
+        </div>
+      </div>
+      <div id="grid-ideias" class="idea-grid"></div>
+
+      <!-- List View -->
+      <div id="list-ideias" class="hidden flex-col gap-2"></div>
+
+      <!-- Board View -->
+      <div id="board-ideias" class="hidden flex gap-4 h-full overflow-x-auto pb-4"></div>
+    </div>
+
+    <!-- Input captura -->
+    <div class="px-5 pb-5 shrink-0">
+      <div class="input-area rounded-2xl p-4 bg-[#09090b] border border-[#27272a]">
+        <!-- Indicador de gravação -->
+        <div id="gravando-badge"
+          class="hidden items-center gap-2 mb-2 px-3 py-1.5 rounded-xl bg-red-950/40 border border-red-900/50 w-fit">
+          <div class="w-2 h-2 rounded-full bg-red-500" style="animation: pulse 1s ease-in-out infinite"></div>
+          <span class="text-xs text-red-200 font-medium">Gravando... fale sua ideia</span>
+          <button onclick="pararVoz()" class="text-xs text-red-400 hover:text-red-300 ml-1">■ parar</button>
+        </div>
+        <style>
+          @keyframes pulse {
+
+            0%,
+            100% {
+              opacity: 1
+            }
+
+            50% {
+              opacity: 0.3
+            }
+          }
+        </style>
+
+        <!-- Preview dos Anexos -->
+        <div id="preview-anexos" class="flex flex-wrap gap-2 mb-2 hidden"></div>
+
+        <textarea id="input-ideia" rows="3"
+          placeholder="Fique à vontade para falar a ideia, ou anexe imagens/planilhas... Ex: 'Crie um dashboard baseado no CSV anexo...'"
+          class="w-full bg-transparent text-sm text-white placeholder-zinc-600 resize-none"
+          onkeydown="handleKeydown(event)"></textarea>
+        <div class="flex items-center justify-between mt-2 pt-2 border-t border-zinc-800/50">
+          <div class="flex gap-2 items-center">
+            <!-- Botão de Anexo -->
+            <input type="file" id="input-anexos" title="Upload de anexos" multiple class="hidden"
+              onchange="lidarComAnexos(event)" accept="image/*,.csv,.txt,.pdf,.pdf,.doc,.docx" />
+            <button onclick="document.getElementById('input-anexos').click()" title="Anexar arquivos ou imagens"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition text-xs text-zinc-300">
+              <span class="text-sm">📎</span>
+              <span>Anexar</span>
+            </button>
+            <!-- Botão de voz -->
+            <button id="btn-voz" onclick="toggleVoz()" title="Falar ideia por voz"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition text-xs text-zinc-300">
+              <span id="icone-voz">🎙</span>
+              <span id="label-voz">Falar</span>
+            </button>
+            <button onclick="usarExemplo(1)" class="text-xs text-zinc-500 hover:text-zinc-300 transition">Ex 1</button>
+            <button onclick="usarExemplo(2)" class="text-xs text-zinc-500 hover:text-zinc-300 transition">Ex 2</button>
+            <button onclick="usarExemplo(3)" class="text-xs text-zinc-500 hover:text-zinc-300 transition">Ex 3</button>
+            <span class="text-xs text-zinc-600 ml-1 hidden sm:inline">Ctrl+Enter para capturar</span>
+          </div>
+          <div class="flex gap-2">
+            <button id="btn-capturar" onclick="capturarIdeia(false)"
+              class="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-sm font-semibold transition border border-zinc-800">
+              Salvar Simples
+            </button>
+            <button id="btn-fabrica" onclick="capturarIdeia(true)"
+              class="px-5 py-2 rounded-xl bg-white hover:bg-zinc-200 text-sm font-bold text-black transition flex items-center gap-2 group shadow-lg shadow-white/5">
+              <span class="grayscale">🚀</span>
+              <span>Fábrica de App (Multi-Agentes)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <p id="aviso-voz" class="hidden text-xs text-yellow-600 mt-1.5 text-center">
+        Reconhecimento de voz não suportado neste browser. Use Chrome ou Edge.
+      </p>
+    </div>
+
+  </div>
+
+  <!-- MODAL NOVO PROJETO -->
+  <div id="modal-projeto"
+    class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 w-full max-w-sm shadow-2xl shadow-black">
+      <h3 class="font-semibold text-white mb-4">Novo Projeto</h3>
+      <input id="input-nome-projeto" type="text" placeholder="Nome do projeto. Ex: App Fazenda, FrigoGest, Delivery..."
+        class="w-full bg-black border border-[#27272a] rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500 mb-3 transition"
+        onkeydown="if(event.key==='Enter') criarProjeto()" />
+      <input id="input-desc-projeto" type="text" placeholder="Descrição curta (opcional)"
+        class="w-full bg-black border border-[#27272a] rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500 mb-4 transition" />
+      <div class="flex gap-3">
+        <button onclick="criarProjeto()"
+          class="flex-1 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-black text-sm font-bold transition">Criar</button>
+        <button onclick="fecharModalProjeto()"
+          class="flex-1 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 text-sm font-medium transition">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CONFIG -->
+  <div id="modal-config"
+    class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 w-full max-w-md shadow-2xl shadow-black">
+      <h3 class="font-semibold text-white mb-4">Configurar Chaves de API</h3>
+      <div class="space-y-4">
+        <!-- Gemini -->
+        <div>
+          <label class="flex justify-between text-xs text-zinc-400 mb-1.5 font-medium" for="config-gemini-key">
+            <span>Chave Gemini <strong class="text-zinc-300 font-medium">(Usada no Gemini Code)</strong></span>
+            <a href="https://aistudio.google.com" target="_blank" rel="noopener noreferrer"
+              class="text-zinc-500 hover:text-white transition">Obter chave</a>
+          </label>
+          <input id="config-gemini-key" type="password" placeholder="AIza..." title="Chave API do Gemini"
+            class="w-full bg-black border border-[#27272a] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-500 transition" />
+        </div>
+        <!-- Groq -->
+        <div>
+          <label class="flex justify-between text-xs text-zinc-400 mb-1.5 font-medium" for="config-groq-key">
+            <span>Chave Groq <strong class="text-zinc-300 font-medium">(Mais Rápido)</strong></span>
+            <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer"
+              class="text-zinc-500 hover:text-white transition">Obter chave</a>
+          </label>
+          <input id="config-groq-key" type="password" placeholder="gsk_..." title="Chave API do Groq"
+            class="w-full bg-black border border-[#27272a] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-500 transition" />
+        </div>
+        <!-- OpenAI -->
+        <div>
+          <label class="flex justify-between text-xs text-zinc-400 mb-1.5 font-medium" for="config-openai-key">
+            <span>Chave OpenAI (ChatGPT / Cursor / Aider)</span>
+            <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer"
+              class="text-zinc-500 hover:text-white transition">Obter chave</a>
+          </label>
+          <input id="config-openai-key" type="password" placeholder="sk-proj-..." title="Chave API do OpenAI"
+            class="w-full bg-black border border-[#27272a] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-500 transition" />
+        </div>
+        <!-- Anthropic -->
+        <div>
+          <label class="flex justify-between text-xs text-zinc-400 mb-1.5 font-medium" for="config-anthropic-key">
+            <span>Chave Claude Anthropic <strong class="text-zinc-300 font-medium">(Usada no Claude
+                Code)</strong></span>
+            <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer"
+              class="text-zinc-500 hover:text-white transition">Obter chave</a>
+          </label>
+          <input id="config-anthropic-key" type="password" placeholder="sk-ant-..." title="Chave API do Anthropic"
+            class="w-full bg-black border border-[#27272a] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-500 transition" />
+        </div>
+
+        <div class="h-px bg-[#27272a] w-full my-2"></div>
+
+        <!-- Ferramentas de UX e Dashboards -->
+        <div>
+          <label class="flex justify-between text-xs text-emerald-400/80 mb-1.5 font-medium" for="config-stitch-key">
+            <span>Chave Stitch / v0 / Bolt (Geradores de Dashboards e UI)</span>
+          </label>
+          <input id="config-stitch-key" type="password" placeholder="Chave para gerar Protótipos e Dashboards..."
+            title="Chave das ferramentas de UI"
+            class="w-full bg-black border border-[#27272a] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition" />
+        </div>
+
+        <!-- Vercel -->
+        <div>
+          <label class="flex justify-between text-xs text-blue-400/80 mb-1.5 font-medium" for="config-vercel-key">
+            <span>Chave Vercel (Dashboard & Deploy)</span>
+            <a href="https://vercel.com/account/tokens" target="_blank" rel="noopener noreferrer"
+              class="text-zinc-500 hover:text-white transition">Obter chave</a>
+          </label>
+          <input id="config-vercel-key" type="password" placeholder="Vercel Access Token..." title="Token Vercel"
+            class="w-full bg-black border border-[#27272a] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500/50 transition" />
+        </div>
+
+        <p class="text-xs text-zinc-500 mt-1 text-center">As chaves ficam salvas <strong
+            class="text-zinc-300 font-medium">apenas no seu navegador</strong>.</p>
+
+        <div class="flex gap-3 pt-2">
+          <button onclick="salvarConfig()"
+            class="flex-1 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-black text-sm font-bold transition">Salvar
+            Todas</button>
+          <button onclick="fecharConfig()"
+            class="flex-1 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 text-sm font-medium transition">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DETALHE IDEIA -->
+  <div id="modal-ideia"
+    class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    onclick="fecharModalIdeia(event)">
+    <div
+      class="bg-[#09090b] border border-[#27272a] rounded-2xl p-6 w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl shadow-black relative"
+      onclick="event.stopPropagation()">
+      <button onclick="document.getElementById('modal-ideia').classList.add('hidden')"
+        class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-400 hover:text-white transition">✕</button>
+
+      <div id="modal-ideia-content"></div>
+
+      <button onclick="document.getElementById('modal-ideia').classList.add('hidden')"
+        class="mt-6 w-full py-3 rounded-xl bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-sm font-medium text-white transition">Fechar
+        Detalhes</button>
+    </div>
+  </div>
+
+  <!-- MODAL GERENCIAR AGENTES -->
+  <div id="modal-agentes"
+    class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div
+      class="bg-[#09090b] border border-[#27272a] rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl shadow-black"
+      onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-[#27272a] bg-[#09090b] rounded-t-2xl">
+        <h3 class="font-bold text-lg text-white">⚙️ Meu Squad (Agentes IA)</h3>
+        <button onclick="fecharModalAgentes()" class="text-zinc-500 hover:text-white text-xl transition">✕</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-6 space-y-6">
+        <div>
+          <h4 class="text-xs font-semibold text-zinc-400 uppercase mb-3">Agentes Ativos</h4>
+          <div id="lista-modal-agentes" class="space-y-3">
+            <!-- renderizados via js -->
+          </div>
+        </div>
+
+        <div class="border-t border-[#27272a] pt-6">
+          <h4 class="text-xs font-semibold text-zinc-400 uppercase mb-3">Criar Novo Especialista</h4>
+          <div class="space-y-3">
+            <div class="flex gap-3">
+              <input id="input-agente-emoji" type="text" placeholder="Emoji"
+                class="w-16 bg-black border border-[#27272a] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 text-center transition"
+                value="🤖" />
+              <input id="input-agente-nome" type="text" placeholder="Nome do Especialista (Ex: Consultor Jurídico)"
+                class="flex-1 bg-black border border-[#27272a] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 transition" />
+            </div>
+            <input id="input-agente-desc" type="text" placeholder="Breve descrição da função"
+              class="w-full bg-black border border-[#27272a] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 transition" />
+            <textarea id="input-agente-system" rows="3"
+              placeholder="System Prompt (Ex: Você é um advogado sênior de Tech verificando a ideia contra a LGPD...)"
+              class="w-full bg-black border border-[#27272a] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 resize-none transition"></textarea>
+            <button onclick="criarAgente()"
+              class="w-full py-2.5 bg-white hover:bg-zinc-200 text-black text-sm font-bold rounded-lg transition mt-2">
+              + Adicionar Agente ao Squad
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL GERENCIAR SKILLS -->
+  <div id="modal-skills" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div
+      class="bg-[#09090b] border border-[#27272a] rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl shadow-black"
+      onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-[#27272a] bg-[#09090b] rounded-t-2xl">
+        <div class="flex items-center gap-4">
+          <h3 class="font-bold text-lg text-white flex items-center gap-2"><span>📚</span> Biblioteca de Skills</h3>
+          <button onclick="importarSkillsLocais()" title="Importar todas as skills locais do Antigravity"
+            class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white text-[10px] uppercase font-bold px-3 py-1.5 rounded-lg transition border border-zinc-700 flex items-center gap-1.5 shadow-sm">
+            <span>⬇️</span> Importar 900+ Base
+          </button>
+        </div>
+        <button onclick="fecharModalSkills()" class="text-zinc-500 hover:text-white text-xl transition">✕</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-6 space-y-6">
+        <div>
+          <h4 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">Skills Instaladas</h4>
+          <div id="lista-modal-skills" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <!-- renderizados via js -->
+          </div>
+        </div>
+
+        <div class="border-t border-[#27272a] pt-6 bg-[#09090b]">
+          <h4 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">Nova Instrução de Masterização
+          </h4>
+          <div class="space-y-3">
+            <div class="flex gap-3">
+              <input id="input-skill-nome" type="text" placeholder="ID da Skill (Ex: ui-ux-pro-max)"
+                class="w-1/3 bg-black border border-[#27272a] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 font-mono transition" />
+              <input id="input-skill-desc" type="text" placeholder="Objetivo rápido desta técnica"
+                class="flex-1 bg-black border border-[#27272a] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 transition" />
+            </div>
+            <textarea id="input-skill-prompt" rows="3"
+              placeholder="Cole aqui o conteúdo inteiro do Prompt da Skill para engatilhar mais fácil futuramente..."
+              class="w-full font-mono bg-black border border-[#27272a] rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none focus:border-zinc-500 resize-none transition leading-relaxed"></textarea>
+            <button onclick="adicionarSkill()"
+              class="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition border border-zinc-700 mt-2 shadow-md">
+              + Cadastrar na Base de Conhecimento
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="skills_data.js"></script>
+  <script>
+    // ─── Estado Global ─────────────────────────────────────────────────────────
+    const API_URL = 'http://localhost:3000/api'; // Desenvolvimento Local (Staging)
+    let apikeyBackup = localStorage.getItem('io_gemini_key') || '';
+    let apiKey = apikeyBackup;
+    let dadosSalvos = carregarDadosLocais();
+    let projetos = dadosSalvos.projetos || [];
+    let ideias = dadosSalvos.ideias || [];
+    let arquivosAnexados = []; // Mantém os anexos em memória antes de enviar
+    let agentes = [];
+    let skills = [];
+    let projetoAtivo = null; // null = todas
+    let agenteAtivoChat = null; // Para o chat
+    let historicoChat = [];
+    let modoVisualizacao = 'grid'; // grid, list, board
+
+    // ─── Prompts do Sistema ───────────────────────────────────────────────────
+    const SYSTEM_COCRIADOR = `Você é um Agente Co-criador de produtos e softwares. Seu objetivo é ajudar o usuário a refinar, estruturar e evoluir uma ideia inicial.
+1. Faça perguntas para entender melhor o público, os recursos e o modelo de negócio (mas no máximo 2 perguntas por vez para não cansar o usuário).
+2. Dê sugestões de recursos ou abordagens técnicas.
+3. Seja direto, criativo e motivador.
+Sempre responda em PT-BR.`;
+
+    const PROMPT_ORQUESTRADOR = (projetosStr, agentesStr) => `Você é o Master Orchestrator. 
+Sua função é analisar uma conversa de brainstorming e decidir onde essa ideia se encaixa e qual especialista deve detalhá-la.
+
+PROJETOS EXISTENTES:
+${projetosStr || 'Nenhum'}
+
+AGENTES DISPONÍVEIS:
+${agentesStr || 'Nenhum'}
+
+Responda APENAS com um objeto JSON válido, sem formatação markdown:
+{
+  "projeto_id": "ID_DO_PROJETO ou 'novo'",
+  "projeto_nome": "Nome do Projeto (se novo)",
+  "agente_id": "ID_DO_AGENTE",
+  "agente_nome": "Nome do Agente",
+  "resumo": "Um título muito curto de até 6 palavras"
+}`;
+
+    const PROMPT_ESPECIALISTA = (agenteSystem) => `${agenteSystem}
+
+Você vai analisar a transcrição de uma co-criação.
+Seu objetivo é transformar as ideias em um artefato JSON estruturado, pronto para desenvolvimento.
+
+Responda APENAS com um objeto JSON válido, sem formatação markdown:
+{
+  "titulo": "Título da Ideia",
+  "descricao": "Resumo objetivo e claro do que vai ser construído",
+  "detalhes": ["Ponto 1", "Ponto 2", "Ponto 3..."],
+  "prioridade": "alta|media|baixa",
+  "tags": ["App", "Frontend", ...],
+  "proximos_passos": ["Passo técnico 1", "Passo técnico 2..."]
+}`;
+
+    // Carrega chaves do config.js para o localStorage automaticamente
+    const _provedor = (typeof PROVEDOR !== 'undefined') ? PROVEDOR : 'gemini';
+    let modelo = 'gemini-2.5-flash';
+
+    const savedConfigGemini = localStorage.getItem('last_config_gemini');
+    if (typeof GEMINI_API_KEY !== 'undefined' && GEMINI_API_KEY !== 'COLE_AQUI') {
+      if (GEMINI_API_KEY !== savedConfigGemini) {
+        localStorage.setItem('io_gemini_key', GEMINI_API_KEY);
+        localStorage.setItem('last_config_gemini', GEMINI_API_KEY);
+      }
+    }
+
+    const savedConfigGroq = localStorage.getItem('last_config_groq');
+    if (typeof GROQ_API_KEY !== 'undefined' && GROQ_API_KEY !== 'COLE_AQUI') {
+      if (GROQ_API_KEY !== savedConfigGroq) {
+        localStorage.setItem('io_groq_key', GROQ_API_KEY);
+        localStorage.setItem('last_config_groq', GROQ_API_KEY);
+      }
+    }
+
+    const savedConfigOpenAI = localStorage.getItem('last_config_openai');
+    if (typeof OPENAI_API_KEY !== 'undefined' && OPENAI_API_KEY !== 'COLE_AQUI') {
+      if (OPENAI_API_KEY !== savedConfigOpenAI) {
+        localStorage.setItem('io_openai_key', OPENAI_API_KEY);
+        localStorage.setItem('last_config_openai', OPENAI_API_KEY);
+      }
+    }
+
+    const savedConfigAnthropic = localStorage.getItem('last_config_anthropic');
+    if (typeof ANTHROPIC_API_KEY !== 'undefined' && ANTHROPIC_API_KEY !== 'COLE_AQUI') {
+      if (ANTHROPIC_API_KEY !== savedConfigAnthropic) {
+        localStorage.setItem('io_anthropic_key', ANTHROPIC_API_KEY);
+        localStorage.setItem('last_config_anthropic', ANTHROPIC_API_KEY);
+      }
+    }
+
+    const savedConfigStitch = localStorage.getItem('last_config_stitch');
+    const savedConfigVercel = localStorage.getItem('last_config_vercel');
+
+    // Load initial values to inputs
+    function inicializarSidebarConfig() {
+      // (a function already existed below probably, we will just add the populate code inside abrirConfig)
+    }
+
+    function abrirConfig() {
+      document.getElementById('config-gemini-key').value = localStorage.getItem('io_gemini_key') || '';
+      document.getElementById('config-groq-key').value = localStorage.getItem('io_groq_key') || '';
+      document.getElementById('config-openai-key').value = localStorage.getItem('io_openai_key') || '';
+      document.getElementById('config-anthropic-key').value = localStorage.getItem('io_anthropic_key') || '';
+      document.getElementById('config-stitch-key').value = localStorage.getItem('io_stitch_key') || '';
+      document.getElementById('config-vercel-key').value = localStorage.getItem('io_vercel_key') || '';
+
+      document.getElementById('modal-config').classList.remove('hidden');
+      document.getElementById('modal-config').classList.add('flex');
+    }
+
+    function fecharConfig() {
+      document.getElementById('modal-config').classList.add('hidden');
+      document.getElementById('modal-config').classList.remove('flex');
+    }
+
+    function salvarConfig() {
+      const gemini = document.getElementById('config-gemini-key').value.trim();
+      const groq = document.getElementById('config-groq-key').value.trim();
+      const openai = document.getElementById('config-openai-key').value.trim();
+      const anthropic = document.getElementById('config-anthropic-key').value.trim();
+      const stitch = document.getElementById('config-stitch-key').value.trim();
+      const vercel = document.getElementById('config-vercel-key').value.trim();
+
+      if (gemini) localStorage.setItem('io_gemini_key', gemini);
+      if (groq) localStorage.setItem('io_groq_key', groq);
+      if (openai) localStorage.setItem('io_openai_key', openai);
+      if (anthropic) localStorage.setItem('io_anthropic_key', anthropic);
+      if (stitch) localStorage.setItem('io_stitch_key', stitch);
+      if (vercel) localStorage.setItem('io_vercel_key', vercel);
+
+      // Re-atualiza state var se for o caso
+      apiKey = localStorage.getItem('io_gemini_key') || '';
+
+      mostrarToast('Configurações salvas!');
+      fecharConfig();
+    }
+
+    async function carregarDadosDoServidor() {
+      try {
+        const [projRes, ideiasRes, agentRes, skillRes] = await Promise.all([
+          fetch(`${API_URL}/projetos`),
+          fetch(`${API_URL}/ideias`),
+          fetch(`${API_URL}/agentes`),
+          fetch(`${API_URL}/skills`)
+        ]);
+
+        projetos = await projRes.json();
+        const ideiasRaw = await ideiasRes.json();
+        agentes = await agentRes.json();
+        skillsDB = await skillRes.json();
+
+        // As ideias precisam ser "des-strigificadas" por conta das Specs
+        ideias = ideiasRaw.map(i => {
+          return {
+            ...JSON.parse(i.conteudo),
+            id: i.id, // Garante manter o ID original do SQLite
+            projeto_id: i.projeto_id
+          };
+        });
+
+        // Garante Mock Default de Primeiro Uso se BD Vazio
+        if (projetos.length === 0) {
+          await salvarProjetos([{ id: 'startup-ai', nome: 'Startup IA', desc: 'App SaaS', cor: '#6366f1', emoji: '🚀', criado: new Date().toISOString() }]);
+        }
+        if (agentes.length === 0) {
+          await salvarAgentes([
+            { id: '1', nome: 'Arquiteto de Software', desc: 'Estrutura técnica', emoji: '💻', system: 'Você é um Arquiteto sênior.' },
+            { id: '2', nome: 'Especialista Negócios', desc: 'Analista de mercado', emoji: '💼', system: 'Estrategista de negócios.' }
+          ]);
+        }
+        if (skillsDB.length === 0) {
+          await salvarSkillsDB([{ id: '1', nome: 'ui-ux-pro', desc: 'Regras visuais', prompt: 'Você é designer chefe.' }]);
+        }
+
+        renderizarSidebar();
+        renderizarIdeias();
+        inicializarSidebarConfig();
+      } catch (e) {
+        console.error('Falha ao conectar no servidor Backend. Verifique se o server.js está rodando (node server.js).', e);
+        mostrarToast('Erro ao carregar dados do Servidor', 'erro');
+      }
+    }
+
+    // Inicia app lendo os dados da Nuvem
+    carregarDadosDoServidor();
+
+    async function salvarProjetos(listaForcada = null) {
+      const pSave = listaForcada || projetos;
+      // Atualiza banco (apenas um fluxo simplificado para exemplo - em prod seria POST p/ novo, PUT p/ edit)
+      try {
+        for (let p of pSave) {
+          await fetch(`${API_URL}/projetos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(p)
+          });
+        }
+        if (listaForcada) projetos = listaForcada; // se foi o MOCK inicial
+      } catch (e) { console.error('Erro salvando projeto', e); }
+    }
+
+    async function salvarIdeias() {
+      // Salva a ultima inserida
+      const novaIdeia = ideias[0];
+      try {
+        await fetch(`${API_URL}/ideias`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(novaIdeia)
+        });
+      } catch (e) { console.error('Erro salvando ideia', e); }
+    }
+
+    async function salvarAgentes(listaForcada = null) {
+      const agSave = listaForcada || agentes;
+      try {
+        for (let a of agSave) {
+          await fetch(`${API_URL}/agentes`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(a)
+          });
+        }
+        if (listaForcada) agentes = listaForcada;
+      } catch (e) { console.error('Erro salvando agente', e); }
+    }
+
+    async function salvarSkillsDB(listaForcada = null) {
+      const sSave = listaForcada || skillsDB;
+      try {
+        if (sSave.length === 1) {
+          await fetch(`${API_URL}/skills`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sSave[0])
+          });
+        } else if (sSave.length > 1) {
+          await fetch(`${API_URL}/skills/batch`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sSave)
+          });
+        }
+        if (listaForcada) skillsDB = listaForcada;
+      } catch (e) { console.error('Erro salvando skill', e); }
+    }
+
+    // ─── Exemplos ──────────────────────────────────────────────────────────────
+    const EXEMPLOS = {
+      1: 'quero uma tela no App que mostre um dashboard com três gráficos principais atualizados em tempo real',
+      2: 'no ERP precisamos ter um relatório de performance por usuário, comparando mês a mês',
+      3: 'ideia pra um app novo de controle de logística, o motorista registra a entrega por foto e voz'
+    };
+
+    function usarExemplo(n) {
+      document.getElementById('input-ideia').value = EXEMPLOS[n];
+      document.getElementById('input-ideia').focus();
+    }
+
+    // ─── Agentes (Squad) ───────────────────────────────────────────────────────
+    function abrirModalAgentes() {
+      renderizarAgentesLista();
+      document.getElementById('modal-agentes').classList.remove('hidden');
+      document.getElementById('modal-agentes').classList.add('flex');
+    }
+
+    function fecharModalAgentes() {
+      document.getElementById('modal-agentes').classList.add('hidden');
+      document.getElementById('modal-agentes').classList.remove('flex');
+    }
+
+    function renderizarAgentesLista() {
+      const lista = document.getElementById('lista-modal-agentes');
+      lista.innerHTML = agentes.map(a => `
+        <div class="flex items-start justify-between bg-black border border-[#27272a] p-3 rounded-xl">
+          <div class="flex-1">
+             <div class="flex items-center gap-2 mb-1">
+                <span class="text-xl">${a.emoji}</span>
+                <span class="font-semibold text-white text-sm">${escapar(a.nome)}</span>
+             </div>
+             <p class="text-xs text-zinc-400 mb-2">${escapar(a.desc)}</p>
+             <p class="text-[10px] text-zinc-500 bg-[#09090b] border border-[#27272a] p-2 rounded-lg leading-relaxed font-mono">Prompt: ${escapar(a.system)}</p>
+          </div>
+          ${a.id !== '1' && a.id !== '2' && a.id !== '3' ? `<button onclick="excluirAgente('${a.id}')" class="text-red-500 hover:text-red-400 p-2 ml-2 transition">🗑️</button>` : `<span class="text-[10px] text-zinc-600 p-2 font-medium">Nativo</span>`}
+        </div>
+      `).join('');
+    }
+
+    function criarAgente() {
+      const nome = document.getElementById('input-agente-nome').value.trim();
+      const desc = document.getElementById('input-agente-desc').value.trim();
+      const system = document.getElementById('input-agente-system').value.trim();
+      const emoji = document.getElementById('input-agente-emoji').value.trim() || '🤖';
+
+      if (!nome || !system) {
+        mostrarToast('Nome e System Prompt são obrigatórios', 'erro');
+        return;
+      }
+
+      agentes.push({
+        id: Date.now().toString(),
+        nome,
+        desc,
+        system,
+        emoji
+      });
+      salvarAgentes();
+      renderizarAgentesLista();
+
+      document.getElementById('input-agente-nome').value = '';
+      document.getElementById('input-agente-desc').value = '';
+      document.getElementById('input-agente-system').value = '';
+      mostrarToast(`Agente ${nome} adicionado ao Squad!`);
+    }
+
+    function excluirAgente(id) {
+      if (!confirm('Demitir este agente?')) return;
+      agentes = agentes.filter(a => a.id !== id);
+      salvarAgentes();
+      renderizarAgentesLista();
+      mostrarToast('Agente removido');
+    }
+
+    // ─── Skills (Biblioteca) ───────────────────────────────────────────────────
+    function abrirModalSkills() {
+      renderizarSkillsLista();
+      document.getElementById('modal-skills').classList.remove('hidden');
+      document.getElementById('modal-skills').classList.add('flex');
+    }
+
+    function fecharModalSkills() {
+      document.getElementById('modal-skills').classList.add('hidden');
+      document.getElementById('modal-skills').classList.remove('flex');
+    }
+
+    function renderizarSkillsLista() {
+      const lista = document.getElementById('lista-modal-skills');
+      lista.innerHTML = skillsDB.map(s => `
+        <div class="flex flex-col bg-black border border-[#27272a] p-4 rounded-xl relative group shadow-sm shadow-black shrink-0">
+          <div class="flex justify-between items-start mb-2">
+            <h5 class="font-bold text-white text-xs font-mono py-0.5 px-2 bg-[#09090b] border border-zinc-800 rounded-md">${escapar(s.nome)}</h5>
+            <button onclick="excluirSkill('${s.id}')" class="text-zinc-600 hover:text-red-500 transition opacity-0 group-hover:opacity-100 p-1">✕</button>
+          </div>
+          <p class="text-xs text-zinc-400 mb-3 leading-relaxed flex-1">${escapar(s.desc)}</p>
+          <div class="mt-auto pt-3 border-t border-[#27272a] flex justify-end">
+            <button onclick="copiarPrompt(this)" data-prompt="${escaparParaAtributo(s.prompt)}" class="text-[10px] uppercase tracking-wider font-bold bg-[#09090b] hover:bg-white text-zinc-300 hover:text-black px-3 py-1.5 rounded-lg border border-[#27272a] transition-all w-full">📋 Copiar Trigger</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function adicionarSkill() {
+      const nome = document.getElementById('input-skill-nome').value.trim();
+      const desc = document.getElementById('input-skill-desc').value.trim();
+      const prompt = document.getElementById('input-skill-prompt').value.trim();
+
+      if (!nome || !prompt) {
+        mostrarToast('ID da Skill e Prompt são obrigatórios', 'erro');
+        return;
+      }
+
+      skillsDB.push({
+        id: Date.now().toString(),
+        nome,
+        desc,
+        prompt
+      });
+      salvarSkillsDB();
+      renderizarSkillsLista();
+
+      document.getElementById('input-skill-nome').value = '';
+      document.getElementById('input-skill-desc').value = '';
+      document.getElementById('input-skill-prompt').value = '';
+      mostrarToast('Skill adicionada a base!');
+    }
+
+    function excluirSkill(id) {
+      if (!confirm('Excluir permanentemente esta Skill da sua base?')) return;
+      skillsDB = skillsDB.filter(s => s.id !== id);
+      salvarSkillsDB();
+      renderizarSkillsLista();
+      mostrarToast('Skill removida da biblioteca');
+    }
+
+    async function importarSkillsLocais() {
+      if (typeof window.IMPORTED_SKILLS === 'undefined' || !window.IMPORTED_SKILLS || window.IMPORTED_SKILLS.length === 0) {
+        mostrarToast('Arquivo skills_data.js não carregado ou sem skills', 'erro');
+        return;
+      }
+      if (!confirm(`Deseja importar ${window.IMPORTED_SKILLS.length} skills do Antigravity para sua base local?`)) return;
+
+      let added = 0;
+      const existents = new Set(skillsDB.map(s => s.nome));
+      const newSkillsToSave = [];
+
+      window.IMPORTED_SKILLS.forEach(skill => {
+        if (!existents.has(skill.nome)) {
+          const newSkill = {
+            id: skill.id,
+            nome: skill.nome,
+            desc: skill.desc || ('Skill: ' + skill.nome),
+            prompt: skill.prompt
+          };
+          skillsDB.push(newSkill);
+          newSkillsToSave.push(newSkill);
+          added++;
+          existents.add(skill.nome);
+        }
+      });
+
+      if (added > 0) {
+        // We only save the new batch to the server
+        await salvarSkillsDB(newSkillsToSave);
+        renderizarSkillsLista();
+        mostrarToast(`${added} novas skills importadas com sucesso!`);
+      } else {
+        mostrarToast('Nenhuma nova skill para importar.');
+      }
+    }
+
+    // ─── Projetos ──────────────────────────────────────────────────────────────
+    function renderizarSidebar() {
+      const lista = document.getElementById('lista-projetos');
+      const totalTodas = ideias.length;
+      document.getElementById('badge-todas').textContent = totalTodas || '';
+
+      lista.innerHTML = projetos.map(p => {
+        const count = ideias.filter(i => i.projeto_id === p.id).length;
+        const isActive = projetoAtivo === p.id;
+        return `
+      <div onclick="selecionarProjeto('${p.id}')"
+           class="proj-btn px-3 py-2 rounded-lg text-sm flex items-center gap-2 ${isActive ? 'active' : ''}"
+           id="proj-btn-${p.id}">
+        <span>${p.emoji || '📁'}</span>
+        <span class="flex-1 truncate text-indigo-200">${escapar(p.nome)}</span>
+        ${count ? `<span class="text-xs bg-indigo-900/60 text-indigo-300 px-1.5 py-0.5 rounded-full">${count}</span>` : ''}
+      </div>
+    `;
+      }).join('');
+
+      // Atualizar estado ativo no botão "todas"
+      const btnTodas = document.getElementById('proj-btn-todas');
+      btnTodas.className = `proj-btn px-3 py-2 rounded-lg text-sm text-indigo-200 flex items-center gap-2 ${projetoAtivo === null ? 'active' : ''}`;
+    }
+
+    function selecionarProjeto(id) {
+      projetoAtivo = id;
+      const proj = projetos.find(p => p.id === id);
+      document.getElementById('titulo-area').textContent = proj ? proj.nome : 'Todas as ideias';
+      document.getElementById('subtitulo-area').textContent = proj ? (proj.desc || '') : 'Mostrando ideias de todos os projetos';
+      renderizarSidebar();
+      renderizarIdeias();
+    }
+
+    function novoProjetoModal() {
+      document.getElementById('input-nome-projeto').value = '';
+      document.getElementById('input-desc-projeto').value = '';
+      document.getElementById('modal-projeto').classList.remove('hidden');
+      setTimeout(() => document.getElementById('input-nome-projeto').focus(), 100);
+    }
+
+    function fecharModalProjeto() {
+      document.getElementById('modal-projeto').classList.add('hidden');
+    }
+
+    function criarProjeto() {
+      const nome = document.getElementById('input-nome-projeto').value.trim();
+      if (!nome) return;
+      const desc = document.getElementById('input-desc-projeto').value.trim();
+      const emojis = ['📱', '🛠', '🚀', '💼', '🌐', '⚙', '🎯', '🔧', '📊', '🏗'];
+      const novo = {
+        id: Date.now().toString(),
+        nome,
+        desc,
+        emoji: emojis[Math.floor(Math.random() * emojis.length)],
+        cor: '#6366f1',
+        criado: new Date().toISOString()
+      };
+      projetos.push(novo);
+      salvarProjetos();
+      fecharModalProjeto();
+      selecionarProjeto(novo.id);
+      mostrarToast(`Projeto "${nome}" criado!`);
+    }
+
+    // ─── Captura Inicial ───────────────────────────────────────────────────────
+
+    async function lidarComAnexos(e) {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
+
+      const previewContainer = document.getElementById('preview-anexos');
+      previewContainer.classList.remove('hidden');
+
+      for (let file of files) {
+        if (file.size > 5 * 1024 * 1024) {
+          mostrarToast(`O arquivo ${file.name} passa de 5MB.`, 'erro');
+          continue;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (evento) => {
+          const base64Str = evento.target.result;
+          arquivosAnexados.push({
+            nome: file.name,
+            tipo: file.type,
+            dados: base64Str
+          });
+          renderizarPreviewAnexos();
+        };
+        reader.readAsDataURL(file);
+      }
+      e.target.value = ''; // reseta o input
+    }
+
+    function removerAnexo(index) {
+      arquivosAnexados.splice(index, 1);
+      renderizarPreviewAnexos();
+    }
+
+    function renderizarPreviewAnexos() {
+      const previewContainer = document.getElementById('preview-anexos');
+      previewContainer.innerHTML = '';
+      if (arquivosAnexados.length === 0) {
+        previewContainer.classList.add('hidden');
+        return;
+      }
+
+      previewContainer.classList.remove('hidden');
+      arquivosAnexados.forEach((arq, index) => {
+        const div = document.createElement('div');
+        div.className = 'flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-lg p-1.5 pr-2 relative group';
+
+        let visualizacao = '<div class="w-8 h-8 bg-zinc-800 rounded flex items-center justify-center text-xs">📄</div>';
+        if (arq.tipo.startsWith('image/')) {
+          visualizacao = `<img src="${arq.dados}" class="w-8 h-8 object-cover rounded" />`;
+        }
+
+        div.innerHTML = `
+          ${visualizacao}
+          <span class="text-xs text-zinc-300 truncate max-w-[100px]" title="${escaparParaAtributo(arq.nome)}">${escapar(arq.nome)}</span>
+          <button onclick="removerAnexo(${index})" class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-900 hover:bg-red-800 text-white rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition shadow-lg">✕</button>
+        `;
+        previewContainer.appendChild(div);
+      });
+    }
+
+    async function capturarIdeia(isFabrica = false) {
+      const input = document.getElementById('input-ideia');
+      const texto = input.value.trim();
+      if (!texto && arquivosAnexados.length === 0) {
+        mostrarToast('Descreva a ideia ou anexe um arquivo primeiro...', 'erro');
+        input.focus();
+        return;
+      }
+
+      const chavesDisponiveis = [
+        localStorage.getItem('io_gemini_key'),
+        localStorage.getItem('io_openai_key'),
+        localStorage.getItem('io_anthropic_key'),
+        localStorage.getItem('io_groq_key')
+      ].some(k => k && k.trim() !== '');
+
+      if (!chavesDisponiveis) {
+        mostrarToast('Configure a chave da API primeiro ⚙', 'erro');
+        abrirConfig();
+        return;
+      }
+
+      const btn1 = document.getElementById('btn-capturar');
+      const btn2 = document.getElementById('btn-fabrica');
+      if (btn1) btn1.disabled = true;
+      if (btn2) btn2.disabled = true;
+
+      document.getElementById('grid-ideias').classList.add('opacity-40');
+      mostrarLoading('Orquestrador analisando...', 'Identificando projeto e tipo de ideia');
+
+      try {
+        // ETAPA 1 — Orquestrador (agora no backend)
+        // Envia para o Back-end orquestrar e popular
+        const res = await fetch(`${API_URL}/ideias/orquestrar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            texto,
+            anexos: arquivosAnexados, // Array de { nome, tipo, dados (base64) }
+            chavesKeys: { // Passando as chaves para que o servidor consiga rodar os Agentes
+              gemini: localStorage.getItem('io_gemini_key') || '',
+              openai: localStorage.getItem('io_openai_key') || '',
+              groq: localStorage.getItem('io_groq_key') || '',
+              anthropic: localStorage.getItem('io_anthropic_key') || '',
+              stitch: localStorage.getItem('io_stitch_key') || '',
+              vercel: localStorage.getItem('io_vercel_key') || ''
+            },
+            provedor: document.getElementById('provedor-sidebar').value,
+            isFabrica: isFabrica // Indica ao backend se é para rodar a fábrica
+          })
+        });
+
+        if (!res.ok) {
+          const erro = await res.json();
+          throw new Error(erro.error || 'Erro no Orquestrador');
+        }
+
+        const respostaBackend = await res.json();
+        const orq = respostaBackend.orquestracao; // Dados do orquestrador
+        const agenteEscolhido = agentes.find(a => a.id === orq.agente_id) || agentes[0];
+        const respTipo = orq.agente_nome || agenteEscolhido?.nome || 'Genérico';
+
+        // Se projeto não existe, cria automaticamente
+        let projetoId = orq.projeto_id;
+        if (projetoId === 'novo' || !projetos.find(p => p.id === projetoId)) {
+          const novoProjeto = {
+            id: Date.now().toString(),
+            nome: orq.projeto_nome || 'Novo Projeto',
+            desc: '',
+            emoji: isFabrica ? '🏭' : (agenteEscolhido?.emoji || '📁'),
+            cor: '#6366f1',
+            criado: new Date().toISOString()
+          };
+          projetos.push(novoProjeto);
+          salvarProjetos();
+          projetoId = novoProjeto.id;
+        }
+
+        const projNome = projetos.find(p => p.id === projetoId)?.nome || orq.projeto_nome;
+
+        if (isFabrica) {
+          // --- PIPELINE FÁBRICA DE APP ---
+          // O backend já fez o trabalho e retornou a ideia completa
+          // Vamos apenas adicionar na lista local para aparecer na tela imediatamente.
+          ideias.unshift(respostaBackend.ideiaGerada);
+
+          document.getElementById('input-ideia').value = '';
+          selecionarProjeto(projetoId);
+          mostrarToast(`Fábrica Autônoma concluiu as Specs e Códigos!`);
+
+        } else {
+          // --- PIPELINE SIMPLES (AGENTE ÚNICO) ---
+          mostrarLoading('Especialista processando...', `Projeto: ${orq.projeto_nome || '?'} | Agente: ${agenteEscolhido?.emoji || '🤖'} ${agenteEscolhido?.nome || 'IA'}`);
+
+          // O backend já processou com o especialista e retornou a ideia completa
+          // Injeta a Ideia Completa Recebida do Backend no Front local (Seta os anexos lá)
+          const novaIdeia = {
+            id: respostaBackend.ideiaGerada.id, // O ID deve ser criado pelo Backend agora!
+            projeto_id: projetoId,
+            status: 'Caixa de Entrada',
+            texto_original: texto,
+            titulo: respostaBackend.ideiaGerada.titulo || orq.resumo,
+            descricao: respostaBackend.ideiaGerada.descricao,
+            tipo: respTipo,
+            detalhes: respostaBackend.ideiaGerada.detalhes || [],
+            prioridade: respostaBackend.ideiaGerada.prioridade || 'media',
+            tags: respostaBackend.ideiaGerada.tags || [],
+            proximos_passos: respostaBackend.ideiaGerada.proximos_passos || [],
+            anexos: arquivosAnexados, // Salva os base64 no front-end para renderização imediata/exportação (se o db local ainda for usado misturado)
+            criado: respostaBackend.ideiaGerada.criado || new Date().toISOString()
+          };
+
+          // Limpa a tela localmente
+          arquivosAnexados = [];
+          renderizarPreviewAnexos();
+
+          ideias.unshift(novaIdeia);
+          salvarIdeias();
+
+          document.getElementById('input-ideia').value = '';
+          selecionarProjeto(projetoId);
+          mostrarToast(`Ideia processada por ${agenteEscolhido?.nome || 'IA'}!`);
+        }
+
+      } catch (err) {
+        mostrarToast(`Erro: ${err.message}`, 'erro');
+        console.error(err);
+      } finally {
+        if (btn1) btn1.disabled = false;
+        if (btn2) btn2.disabled = false;
+        document.getElementById('grid-ideias').classList.remove('opacity-40');
+        esconderLoading();
+      }
+    }
+
+    // ─── Prompts ───────────────────────────────────────────────────────────────
+    function PROMPT_ORQUESTRADOR(projetosStr, agentesStr) {
+      return `Você é o Orquestrador-Chefe de uma Fábrica Autônoma de Software. Sua função é delegar a ideia bruta do usuário para o Agente mais apropriado ("Squad") e para o Projeto correto.
+
+PROJETOS EXISTENTES:
+${projetosStr || 'Nenhum projeto cadastrado'}
+
+AGENTES DO SQUAD DISPONÍVEIS:
+${agentesStr || 'Nenhum agente cadastrado'}
+
+Analise a ideia e decida o roteamento. Retorne SOMENTE um único objeto JSON válido.
+Exemplo:
+{
+  "projeto_id": "ID exato do projeto existente OU 'novo' se for uma ideia totalmente isolada/para projeto novo",
+  "projeto_nome": "Nome do projeto (existente ou novo sugerido)",
+  "agente_id": "ID exato do agente mais qualificado para essa demanda na lista do Squad",
+  "agente_nome": "Nome do agente selecionado",
+  "resumo": "Resumo em 1 frase curta do que é a ideia ou pedido",
+  "confianca": "alta|media|baixa"
+}`;
+    }
+    // ─── Especialista ────────────────────────────────────────────────────────
+    function PROMPT_ESPECIALISTA(systemPromptDoAgente) {
+      return `DIRETRIZES DO SEU PERSONAGEM DE AGENTE IA ESPECIALISTA:
+${systemPromptDoAgente}
+
+INSTRUÇÕES DO SISTEMA E FORMATAÇÃO:
+Você recebeu uma ideia bruta do usuário. Aplique todo o seu conhecimento de especialista na sua área para transformar essa ideia.
+Responda APENAS com um objeto JSON válido (sem tags markdown como \`\`\`json, não inclua nenhum texto de introdução, APENAS O JSON BRUTO). 
+
+O JSON exigido possui as chaves exatas abaixo:
+{
+  "titulo": "Título curto e claro (máx 60 chars)",
+  "descricao": "Descrição completa e estruturada da ideia (2-4 frases)",
+  "detalhes": ["Detalhe prático ou de execução 1", "Detalhe 2"],
+  "prioridade": "alta|media|baixa",
+  "tags": ["tag1", "tag2"],
+  "proximos_passos": ["Próximo passo concreto 1", "Próximo passo 2"]
+}
+
+Seja específico e direto ao ponto. Expanda a ideia com considerações relevantes da sua área pensando na execução real.`;
+    }
+
+    // --- PROMPTS DA FÁBRICA (PIPELINE SEQUENCIAL) ---
+    const PROMPT_ANALISTA = `Você é o Analista de Produto Chefe (Product Manager).
+O usuário enviou uma ideia bruta para um aplicativo/software.
+Sua missão é transformar esse "Brain Dump" em um PRD (Product Requirement Document) direto, técnico e sem enrolação.
+
+Mapeie e retorne SOMENTE um JSON válido com o seguinte formato:
+{
+  "visao_geral": "Descrição executiva do produto e o problema que resolve (3 frases)",
+  "publico_alvo": ["Público 1", "Público 2"],
+  "core_features": ["Feature principal 1 detalhada", "Feature 2", "Feature 3"],
+  "metricas_sucesso": ["Métrica 1", "Métrica 2"]
+}`;
+
+    const PROMPT_ARQUITETO = (prdBase) => `Você é o Arquiteto de Software Principal.
+Aqui está a definição do Produto (PRD) feita pelo Analista:
+${JSON.stringify(prdBase)}
+
+Sua missão é deduzir a Arquitetura de Dados (Data Schema) e o fluxo da aplicação. Como isso será modelado no Banco de Dados?
+Retorne SOMENTE um JSON válido no formato:
+{
+  "banco_de_dados": ["Tabela/Coleção X: campo1, campo2", "Coleção Y: campo1, relacional"],
+  "fluxo_usuario": ["Login", "Dashboard", "Ação Core", "Relatório"],
+  "apis_necessarias": ["Autenticação", "Sistema X", "Sistema Y"]
+}`;
+
+    const PROMPT_SCOUT = (prd, arq) => `Você é o Scout de Tecnologia (Pesquisador).
+Analise o PRD e a Arquitetura abaixo:
+PRD: ${JSON.stringify(prd)}
+ARQ: ${JSON.stringify(arq)}
+
+Identifique QUAIS ferramentas, MCPs (Model Context Protocol) ou APIs de terceiros (ex: Stripe, Maps, OCR) acelerariam muito esse desenvolvimento ao invés de programarmos do zero.
+Retorne SOMENTE um JSON:
+{
+  "ferramentas_sugeridas": [{"nome": "Stripe", "motivo": "Para pagamentos"}, {"nome": "Supabase", "motivo": "Autenticação e DB rápido"}],
+  "riscos_tecnicos": ["Risco 1", "Risco 2"]
+}`;
+
+    const PROMPT_ENG_SOFTWARE = (prd, arq, scout) => `Você é o Orquestrador de Código (Engenheiro de Software Poliglota).
+Aqui está o Dossiê completo até agora:
+PRD: ${JSON.stringify(prd)}
+ARQ: ${JSON.stringify(arq)}
+SCOUT: ${JSON.stringify(scout)}
+
+Sua missão é DETERMINAR a Stack de Tecnologias perfeita (Linguagens e Frameworks) para a arquitetura proposta e ESCREVER o Boilerplate inicial (Código Base).
+Retorne SOMENTE um JSON no formato EXATO:
+{
+  "stack_escolhida": {
+    "frontend": "Ex: React com Vite e TailwindCSS",
+    "backend": "Ex: Node.js com Express ou Supabase",
+    "mobile": "Ex: React Native (se aplicável, ou null)"
+  },
+  "justificativa": "Um parágrafo curto explicando por que essas linguagens/frameworks são perfeitos para essa ideia.",
+  "boilerplates": [
+    {
+      "arquivo": "Ex: package.json ou requirements.txt",
+      "linguagem": "json",
+      "codigo": "{\\n  \\"name\\": \\"app\\",\\n  \\"version\\": \\"1.0.0\\"\\n}"
+    },
+    {
+      "arquivo": "Ex: src/App.jsx ou main.py",
+      "linguagem": "javascript",
+      "codigo": "export default function App() { return <div>Inicio</div> }"
+    }
+  ]
+}`;
+
+    const PROMPT_GERENTE = (prd, arq, scout, eng) => `Você é o Gerente de Projetos e Líder.
+Aqui está o Dossiê completo:
+PRD: ${JSON.stringify(prd)}
+ARQ: ${JSON.stringify(arq)}
+SCOUT: ${JSON.stringify(scout)}
+ENGENHARIA: ${JSON.stringify(eng)}
+
+Sua missão é quebrar esse projeto em uma MENTORIA SEQUENCIAL DE PROMPTS.
+DIFERENCIAL: Para CADA prompt, você deve designar QUAL IA do "Setup Pro-Max" do usuário deve executar a tarefa:
+  - "[Antigravity]": Para SETUP de Workspace, instalar dependências pesadas, criar arquiteturas base, criar skills e integrações difíceis.
+  - "[Claude Code]": Para Força Bruta de Codificação de Componentes, Refatoração, Lógica de Negócio extensa.
+  - "[Cursor]": Ações manuais para o próprio Usuário revisar ou usar o Composer em arquivos menores.
+
+IMPORTANTE: O usuário quer que esses prompts sejam AUTO-CONTIDOS e prontos para **COPIAR E COLAR** no terminal Antigravity ou Claude. Escreva os prompts dando "ordens" claras à IA que irá recebê-lo, citando o arquivo 'antigravity-spec.md' que conterá o contexto geral.
+
+Retorne SOMENTE um JSON no formato EXATO:
+{
+  "titulo_oficial": "Nome final batizado para o App",
+  "descricao_resumo": "Um resumo geral de 2 linhas",
+  "prompts_sequenciais": [
+    "[Antigravity] Analise o arquivo antigravity-spec.md. Inicie um projeto Vite + React na pasta atual. Instale Tailwind, configure a estrutura de pastas conforme a especificação do banco de dados M.",
+    "[Claude Code] Baseado no PRD do arquivo antigravity-spec.md, implemente as rotas de API para Login e Cadastro usando recursos do Supabase."
+  ]
+}`;
+
+    // ─── API ───────────────────────────────────────────────────────────────────
+    // callClaude redireciona para a cascata inteligente (roteador)
+    async function callClaude(system, user, ordemPreferencial = null) {
+      return callCascata(system, user, ordemPreferencial);
+    }
+
+    async function callAnthropic(system, user, key) {
+      const k = key || localStorage.getItem('io_anthropic_key');
+      if (!k) throw new Error('SEM_CHAVE');
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': k, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-calls': 'true' },
+        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1500, system, messages: [{ role: 'user', content: user }] })
+      });
+      if (!resp.ok) { const e = await resp.json(); throw new Error(e.error?.message || `HTTP ${resp.status}`); }
+      return (await resp.json()).content[0].text;
+    }
+
+    async function callOpenAI(system, user, key) {
+      const k = key || localStorage.getItem('io_openai_key');
+      if (!k) throw new Error('SEM_CHAVE');
+      const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${k}` },
+        body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 1500, response_format: { type: 'json_object' }, messages: [{ role: 'system', content: system }, { role: 'user', content: user }] })
+      });
+      if (!resp.ok) { const e = await resp.json(); throw new Error(e.error?.message || `HTTP ${resp.status}`); }
+      return (await resp.json()).choices[0].message.content;
+    }
+
+    async function callGroq(system, user, key) {
+      const k = key || localStorage.getItem('io_groq_key');
+      if (!k) throw new Error('SEM_CHAVE');
+      const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${k}` },
+        body: JSON.stringify({ model: 'llama-3.1-8b-instant', max_tokens: 1500, response_format: { type: 'json_object' }, messages: [{ role: 'system', content: system }, { role: 'user', content: user }] })
+      });
+      if (!resp.ok) { const e = await resp.json(); throw new Error(e.error?.message || `HTTP ${resp.status}`); }
+      return (await resp.json()).choices[0].message.content;
+    }
+
+    async function callGemini(system, user, key) {
+      const k = key || localStorage.getItem('io_gemini_key');
+      if (!k) throw new Error('SEM_CHAVE');
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${k}`;
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: `${system}\n\n${user}` }] }], generationConfig: { maxOutputTokens: 1500, responseMimeType: 'application/json' } })
+      });
+      if (!resp.ok) { const e = await resp.json(); throw new Error(e.error?.message || `HTTP ${resp.status}`); }
+      return (await resp.json()).candidates[0].content.parts[0].text;
+    }
+
+    // ROTEADOR INTELIGENTE (SMART CASCATA)
+    async function callCascata(system, user, ordemPreferencial = null) {
+      const todosProvedores = {
+        'Gemini': { nome: 'Gemini', id: 'gemini', fn: callGemini, key: localStorage.getItem('io_gemini_key') },
+        'OpenAI': { nome: 'OpenAI', id: 'openai', fn: callOpenAI, key: localStorage.getItem('io_openai_key') },
+        'Anthropic': { nome: 'Anthropic', id: 'anthropic', fn: callAnthropic, key: localStorage.getItem('io_anthropic_key') },
+        'Groq': { nome: 'Groq', id: 'groq', fn: callGroq, key: localStorage.getItem('io_groq_key') }
+      };
+
+      // Se uma ordem for especificada pelos agentes, usa-a. Caso contrário, ordem padrão.
+      const ordens = ordemPreferencial || ['Gemini', 'OpenAI', 'Anthropic', 'Groq'];
+
+      // Monta a lista preferencial ignorando os que não tem chave definida no navegador
+      const provedoresAtivos = ordens
+        .map(nome => todosProvedores[nome])
+        .filter(p => p && p.key && p.key.length > 5);
+
+      // Se todas as escolhas preferenciais falharem ou não tiverem chaves, cria um "Fallback Universal" de tudo que sobrou
+      const ativosUniversais = Object.values(todosProvedores).filter(p => p.key && p.key.length > 5);
+
+      const provedoresParaUso = provedoresAtivos.length > 0 ? provedoresAtivos : ativosUniversais;
+
+      if (provedoresParaUso.length === 0) {
+        throw new Error('Você precisa configurar pelo menos uma Chave de API de IA nas configurações.');
+      }
+
+      let ultimoErro = null;
+      for (let i = 0; i < provedoresParaUso.length; i++) {
+        const p = provedoresParaUso[i];
+        try {
+          console.log(`[Smart Router] Tentando acionar: ${p.nome}...`);
+          return await p.fn(system, user, p.key);
+        } catch (err) {
+          console.warn(`[Smart Router] Provedor ${p.nome} falhou/indisponível. Erro: ${err.message}`);
+          ultimoErro = err;
+          // Continua para o próximo loop (Fallback)
+        }
+      }
+
+      throw new Error(`Todos os métodos falharam. Último erro: ${ultimoErro?.message || 'Desconhecido'}`);
+    }
+
+    // Chat usa o histórico formatado para cada provedor
+    async function callChatProvedor(historico) {
+      const provAtual = localStorage.getItem('io_provedor') || _provedor;
+      const currentApiKey = localStorage.getItem(`io_${provAtual}_key`);
+      if (!currentApiKey) throw new Error(`Chave da API para ${provAtual} não configurada.`);
+
+      if (provAtual === 'openai') {
+        const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
+          body: JSON.stringify({ model: modelo, max_tokens: 800, messages: [{ role: 'system', content: SYSTEM_COCRIADOR }, ...historico] })
+        });
+        if (!resp.ok) { const e = await resp.json(); throw new Error(e.error?.message); }
+        const d = await resp.json();
+        return d.choices[0].message.content;
+      }
+      if (provAtual === 'groq') {
+        const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentApiKey}` },
+          body: JSON.stringify({ model: modelo, max_tokens: 800, messages: [{ role: 'system', content: SYSTEM_COCRIADOR }, ...historico] })
+        });
+        if (!resp.ok) { const e = await resp.json(); throw new Error(e.error?.message); }
+        const d = await resp.json();
+        return d.choices[0].message.content;
+      }
+      if (provAtual === 'gemini') {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${currentApiKey}`;
+        const contents = historico.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
+        contents.unshift({ role: 'user', parts: [{ text: SYSTEM_COCRIADOR }] });
+        contents.splice(1, 0, { role: 'model', parts: [{ text: 'Entendido! Estou pronto para co-criar ideias.' }] });
+        const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents, generationConfig: { maxOutputTokens: 800 } }) });
+        if (!resp.ok) { const e = await resp.json(); throw new Error(e.error?.message); }
+        const d = await resp.json();
+        return d.candidates[0].content.parts[0].text;
+      }
+      // Anthropic
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': currentApiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-calls': 'true' },
+        body: JSON.stringify({ model: modelo, max_tokens: 800, system: SYSTEM_COCRIADOR, messages: historico })
+      });
+      if (!resp.ok) { const e = await resp.json(); throw new Error(e.error?.message); }
+      const d = await resp.json();
+      return d.content[0].text;
+    }
+
+    // Extrator de JSON indestrutível
+    function extrairJSON(texto) {
+      if (typeof texto !== 'string') return texto;
+
+      // 1. Limpeza de blocos markdown que confundem parsers
+      let limpo = texto.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
+
+      // 2. Busca de chaves ou colchetes balanceados ignorando conteúdo dentro de strings
+      function findBalanced(str, startChar, endChar) {
+        let start = str.indexOf(startChar);
+        while (start !== -1) {
+          let count = 0;
+          let inString = false;
+          let escape = false;
+          for (let i = start; i < str.length; i++) {
+            const char = str[i];
+            if (escape) { escape = false; continue; }
+            if (char === '\\') { escape = true; continue; }
+            if (char === '"') { inString = !inString; continue; }
+
+            if (!inString) {
+              if (char === startChar) count++;
+              else if (char === endChar) {
+                count--;
+                if (count === 0) return str.substring(start, i + 1);
+              }
+            }
+          }
+          start = str.indexOf(startChar, start + 1);
+        }
+        return null;
+      }
+
+      let jsonStr = findBalanced(limpo, '{', '}') || findBalanced(limpo, '[', ']');
+
+      if (!jsonStr) {
+        // Se a IA foi muito tagarela ou falhou em formatar JSON, vamos perdoar e injetar um dummy.
+        // Assim a página não quebra, e cria uma Ideia preenchida com o que a IA falou para lermos.
+        let safeFailObj = {
+          visao_geral: "Ocorreu um desvio de prompt. A IA retornou texto puro em vez de JSON.",
+          descricao_resumo: texto.length > 80 ? texto.substring(0, 80) + '...' : texto,
+          titulo_oficial: "Ideia Capturada",
+          descricao: texto,
+          proximos_passos: ["A IA não seguiu a estrutura. Veja a ideia original."],
+          core_features: [texto],
+          agente_id: '1',
+          projeto_nome: 'Ideias em Rascunho',
+          agente_nome: 'Genérico'
+        };
+        return safeFailObj;
+      }
+
+      const processarResultado = (obj) => {
+        if (Array.isArray(obj) && obj.length > 0 && typeof obj[0] === 'object') {
+          return obj[0];
+        }
+        return obj;
+      };
+
+      try {
+        return processarResultado(JSON.parse(jsonStr));
+      } catch (e1) {
+        try {
+          // Flatten newlines e remove trailing commas problemáticas
+          let flatStr = jsonStr.replace(/[\n\r\t]+/g, ' ');
+          flatStr = flatStr.replace(/,\s*([\]}])/g, '$1');
+          return processarResultado(JSON.parse(flatStr));
+        } catch (e2) {
+          try {
+            // Limpeza agressiva extra para aspas não escapadas no meio das palavras
+            let aspasPuras = jsonStr.replace(/(\w)"(\w)/g, "$1'$2");
+            aspasPuras = aspasPuras.replace(/[\n\r\t]+/g, ' ').replace(/,\s*([\]}])/g, '$1');
+            return processarResultado(JSON.parse(aspasPuras));
+          } catch (e3) {
+            console.error('JSON Crash. String extraída:', jsonStr, '\nErro:', e3);
+            throw new Error('A IA não formatou as aspas corretamente.');
+          }
+        }
+      }
+    }
+
+    // ─── Modos de Visualização ──────────────────────────────────────────────────
+    function mudarVisualizacao(modo) {
+      modoVisualizacao = modo;
+
+      // Atualizar UI dos botões
+      document.getElementById('btn-view-grid').className = `px-2.5 py-1 text-xs rounded-md transition ${modo === 'grid' ? 'bg-zinc-700 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200'}`;
+      document.getElementById('btn-view-list').className = `px-2.5 py-1 text-xs rounded-md transition ${modo === 'list' ? 'bg-zinc-700 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200'}`;
+      document.getElementById('btn-view-board').className = `px-2.5 py-1 text-xs rounded-md transition ${modo === 'board' ? 'bg-zinc-700 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200'}`;
+
+      // Exibir/Ocultar containers
+      document.getElementById('grid-ideias').classList.toggle('hidden', modo !== 'grid');
+      document.getElementById('list-ideias').classList.toggle('hidden', modo !== 'list');
+      document.getElementById('board-ideias').classList.toggle('hidden', modo !== 'board');
+
+      renderizarIdeias();
+    }
+
+    // ─── Render ideias ─────────────────────────────────────────────────────────
+    const TIPO_LABEL = { feature: 'Feature', ux: 'UX / Tela', tech: 'Tech', negocio: 'Negócio', marketing: 'Marketing', processos: 'Processos', outro: 'Outro' };
+    const PRIO_LABEL = { alta: '🔴 Alta', media: '🟡 Média', baixa: '🟢 Baixa' };
+
+    function renderizarIdeias() {
+      const busca = (document.getElementById('campo-busca')?.value || '').toLowerCase();
+      const filtro = document.getElementById('filtro-tipo')?.value || '';
+
+      let lista = ideias.filter(i => {
+        if (projetoAtivo && i.projeto_id !== projetoAtivo) return false;
+        if (filtro && i.tipo !== filtro) return false;
+        if (busca) {
+          const texto = `${i.titulo} ${i.descricao} ${i.texto_original} ${(i.tags || []).join(' ')}`.toLowerCase();
+          if (!texto.includes(busca)) return false;
+        }
+        return true;
+      });
+
+      const grid = document.getElementById('grid-ideias');
+      const list = document.getElementById('list-ideias');
+      const board = document.getElementById('board-ideias');
+      const vazio = document.getElementById('area-vazia');
+
+      if (lista.length === 0) {
+        grid.innerHTML = '';
+        list.innerHTML = '';
+        board.innerHTML = '';
+        vazio.classList.remove('hidden');
+        vazio.classList.add('flex');
+        return;
+      }
+
+      vazio.classList.add('hidden');
+      vazio.classList.remove('flex');
+
+      // -- Geração do HTML de um Card Padrão (Usado no Grid e no Board) --
+      const gerarCard = (ideia) => {
+        const proj = projetos.find(p => p.id === ideia.projeto_id);
+        const data = new Date(ideia.criado).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+        const tagsHtml = (ideia.tags || []).slice(0, 3).map(t =>
+          `<span class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300">${escapar(t)}</span>`
+        ).join('');
+
+        let anexosPreview = '';
+        if (ideia.anexos && ideia.anexos.length > 0) {
+          const anexosVisuais = ideia.anexos.map(a => {
+            if (a.tipo && a.tipo.startsWith('image/')) {
+              return `<img src="${a.dados}" class="w-6 h-6 object-cover rounded shadow-sm border border-zinc-700" title="${escaparParaAtributo(a.nome)}" />`;
+            }
+            return `<div class="w-6 h-6 bg-zinc-800 rounded flex items-center justify-center text-[10px] border border-zinc-700" title="${escaparParaAtributo(a.nome)}">📄</div>`;
+          }).join('');
+          anexosPreview = `<div class="flex gap-1 mb-2">${anexosVisuais}</div>`;
+        }
+
+        return `
+          <div onclick="abrirIdeia('${ideia.id}')"
+               class="card rounded-xl p-4 cursor-pointer slide-up transition hover:translate-y-[-2px] shadow-sm shadow-black border border-[#27272a] bg-[#09090b] mb-3">
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-medium badge-${ideia.tipo} uppercase tracking-wide border border-[#27272a]">${TIPO_LABEL[ideia.tipo] || ideia.tipo}</span>
+              <button onclick="event.stopPropagation(); deletarIdeia('${ideia.id}')" class="text-zinc-600 hover:text-red-400 text-sm transition">✕</button>
+            </div>
+            <h3 class="font-semibold text-sm text-white leading-snug mb-1.5">${escapar(ideia.titulo || '')}</h3>
+            <p class="text-xs text-zinc-400 line-clamp-2 leading-relaxed mb-3">${escapar(ideia.descricao || '')}</p>
+            ${anexosPreview}
+            <div class="flex flex-wrap gap-1.5">${tagsHtml}</div>
+            <div class="flex items-center justify-between mt-3 pt-3 border-t border-[#27272a]">
+              <span class="text-[10px] text-zinc-500 font-medium">${proj ? `${proj.emoji} ${proj.nome}` : '?'}</span>
+              <span class="text-[10px] text-zinc-600">${data}</span>
+            </div>
+          </div>
+        `;
+      };
+
+      if (modoVisualizacao === 'grid') {
+        grid.innerHTML = lista.map(i => gerarCard(i)).join('');
+      }
+      else if (modoVisualizacao === 'list') {
+        list.innerHTML = lista.map(ideia => {
+          const proj = projetos.find(p => p.id === ideia.projeto_id);
+          const data = new Date(ideia.criado).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+          const status = ideia.status || 'Caixa de Entrada';
+          let anexoIcon = ideia.anexos && ideia.anexos.length > 0 ? '📎 ' : '';
+          return `
+            <div onclick="abrirIdeia('${ideia.id}')" class="flex items-center justify-between p-3 rounded-lg border border-[#27272a] bg-[#09090b] hover:bg-zinc-900 cursor-pointer transition">
+              <div class="flex items-center gap-4 flex-1 overflow-hidden">
+                <span class="text-lg w-6 text-center">${proj ? proj.emoji : '📁'}</span>
+                <div class="w-48"><span class="text-[10px] px-2 py-0.5 rounded-full font-medium badge-${ideia.tipo} uppercase tracking-wide">${TIPO_LABEL[ideia.tipo] || ideia.tipo}</span></div>
+                <h3 class="font-semibold text-sm text-white truncate flex-1">${anexoIcon}${escapar(ideia.titulo || '')}</h3>
+                <span class="w-32 text-xs text-zinc-500 truncate">${status}</span>
+                <span class="w-24 text-xs text-zinc-600 text-right">${data}</span>
+              </div>
+              <button onclick="event.stopPropagation(); deletarIdeia('${ideia.id}')" class="text-zinc-600 hover:text-red-400 text-sm ml-4 transition">✕</button>
+            </div>
+          `;
+        }).join('');
+      }
+      else if (modoVisualizacao === 'board') {
+        const COLUNAS = ['Caixa de Entrada', 'Em Refinamento', 'Pronto p/ Code', 'Em Produção', 'Arquivado'];
+        const colunasData = COLUNAS.reduce((acc, col) => { acc[col] = []; return acc; }, {});
+
+        lista.forEach(i => {
+          const s = i.status || 'Caixa de Entrada';
+          if (colunasData[s]) colunasData[s].push(i);
+          else colunasData['Caixa de Entrada'].push(i);
+        });
+
+        board.innerHTML = COLUNAS.map(col => `
+          <div class="board-column">
+            <div class="board-column-header">
+              <span>${col}</span>
+              <span class="bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded text-[10px]">${colunasData[col].length}</span>
+            </div>
+            <div class="board-column-content">
+              ${colunasData[col].map(i => gerarCard(i)).join('')}
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    function abrirIdeia(id) {
+      const ideia = ideias.find(i => i.id === id);
+      if (!ideia) return;
+      const proj = projetos.find(p => p.id === ideia.projeto_id);
+
+      const detalhesHtml = (ideia.detalhes || []).map(d => `<li class="text-sm text-zinc-300">• ${escapar(d)}</li>`).join('');
+      const passosHtml = (ideia.proximos_passos || []).map((p, i) => `
+    <div class="flex gap-3 items-start">
+      <span class="w-5 h-5 rounded-full bg-zinc-800 text-zinc-400 flex items-center justify-center text-xs font-semibold shrink-0 border border-zinc-700">${i + 1}</span>
+      <span class="text-sm text-zinc-300 leading-relaxed mt-0.5">${escapar(p)}</span>
+    </div>
+  `).join('');
+      const tagsHtml = (ideia.tags || []).map(t =>
+        `<span class="text-xs px-2 py-1 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-300">${escapar(t)}</span>`
+      ).join('');
+
+      let anexosModalHtml = '';
+      if (ideia.anexos && ideia.anexos.length > 0) {
+        const anexosItems = ideia.anexos.map(a => {
+          if (a.tipo && a.tipo.startsWith('image/')) {
+            return `<a href="${a.dados}" target="_blank" class="block w-20 h-20 shrink-0"><img src="${a.dados}" class="w-full h-full object-cover rounded-lg border border-zinc-700 hover:border-zinc-500 transition" title="${escaparParaAtributo(a.nome)}"/></a>`;
+          }
+          return `<a href="${a.dados}" download="${escaparParaAtributo(a.nome)}" class="flex flex-col items-center justify-center w-20 h-20 shrink-0 bg-[#18181b] border border-zinc-700 rounded-lg hover:bg-zinc-800 transition p-2 text-center" title="${escaparParaAtributo(a.nome)}"><span class="text-xl mb-1">📄</span><span class="text-[9px] text-zinc-400 truncate w-full">${escapar(a.nome)}</span></a>`;
+        }).join('');
+        anexosModalHtml = `
+          <div>
+            <h4 class="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Anexos</h4>
+            <div class="flex gap-3 overflow-x-auto pb-2">${anexosItems}</div>
+          </div>
+        `;
+      }
+
+      if (ideia.tipo === 'Fábrica de App') {
+        modalBodyHtml = `
+          <div class="space-y-4 flex-1 overflow-y-auto pr-2">
+            ${anexosModalHtml}
+            <div class="bg-black p-5 rounded-xl border border-[#27272a]">
+              <h4 class="text-sm font-bold text-white mb-3 flex items-center gap-2"><span>📊</span> PRD (Analista)</h4>
+              <p class="text-sm text-zinc-300 leading-relaxed mb-4">${escapar(ideia.spec_produto?.visao_geral || '')}</p>
+              <h5 class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Core Features:</h5>
+              <ul class="list-disc pl-5 space-y-1.5 mb-2">
+                ${(ideia.spec_produto?.core_features || []).map(f => `<li class="text-sm text-zinc-300">${escapar(f)}</li>`).join('')}
+              </ul>
+            </div>
+
+            <div class="bg-black p-5 rounded-xl border border-[#27272a]">
+              <h4 class="text-sm font-bold text-white mb-3 flex items-center gap-2"><span>🏗️</span> Arquitetura</h4>
+              <h5 class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Banco de Dados:</h5>
+              <ul class="list-disc pl-5 space-y-1.5 mb-4">
+                ${(ideia.spec_arquitetura?.banco_de_dados || []).map(b => `<li class="text-sm text-zinc-300">${escapar(b)}</li>`).join('')}
+              </ul>
+              <h5 class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Fluxo (UX):</h5>
+              <p class="text-sm text-zinc-300 leading-relaxed">${(ideia.spec_arquitetura?.fluxo_usuario || []).join(' ➔ ')}</p>
+            </div>
+            
+            <div class="bg-black p-5 rounded-xl border border-[#27272a]">
+              <h4 class="text-sm font-bold text-white mb-3 flex items-center gap-2"><span>🔍</span> Scout & Stack</h4>
+              <ul class="list-disc pl-5 space-y-2 mb-2">
+                ${(ideia.spec_tecnologia?.ferramentas_sugeridas || []).map(f => `<li class="text-sm text-zinc-300"><strong class="text-white">${escapar(f.nome || 'Ferramenta')}</strong>: ${escapar(f.motivo || '')}</li>`).join('')}
+              </ul>
+            </div>
+
+            <div class="bg-black p-5 rounded-xl border border-zinc-700 relative overflow-hidden">
+              <div class="absolute top-0 left-0 w-1 h-full bg-zinc-500"></div>
+              <h4 class="text-sm font-bold text-white mb-4 flex items-center gap-2 pl-2"><span>⚡</span> Script Mestre (Antigravity)</h4>
+              <div class="space-y-4 pl-2">
+                ${(ideia.proximos_passos || []).map((p, i) => {
+          let badgeHtml = '';
+          let textoPrompt = p;
+          if (p.includes('[Antigravity]')) {
+            badgeHtml = '<span class="inline-block px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 border border-zinc-700 text-[10px] uppercase tracking-wider font-bold mb-2">Antigravity (Setup/Arch)</span>';
+            textoPrompt = p.replace('[Antigravity]', '').trim();
+          } else if (p.includes('[Claude Code]')) {
+            badgeHtml = '<span class="inline-block px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 border border-zinc-700 text-[10px] uppercase tracking-wider font-bold mb-2">Claude Code (Code/Logic)</span>';
+            textoPrompt = p.replace('[Claude Code]', '').trim();
+          } else if (p.includes('[Cursor]')) {
+            badgeHtml = '<span class="inline-block px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 border border-zinc-700 text-[10px] uppercase tracking-wider font-bold mb-2">Cursor IDE (Human Review/UI)</span>';
+            textoPrompt = p.replace('[Cursor]', '').trim();
+          }
+
+          return `
+                  <div class="bg-[#09090b] p-4 rounded-xl border border-[#27272a] relative group">
+                    <div class="flex items-start justify-between mb-3">
+                      <span class="text-[10px] font-bold text-zinc-500 block mt-1 tracking-wider">PROMPT ${i + 1}</span>
+                      <div class="flex items-center gap-2">
+                        ${badgeHtml}
+                        <button onclick="copiarPrompt(this)" data-prompt="${escaparParaAtributo(textoPrompt)}" class="opacity-0 group-hover:opacity-100 transition-all text-xs bg-zinc-800 hover:bg-white text-zinc-300 hover:text-black font-semibold px-3 py-1.5 rounded-lg border border-[#27272a]" title="Copiar Prompt para a Área de Transferência">📋 Copiar</button>
+                      </div>
+                    </div>
+                    <span class="text-sm text-zinc-300 block whitespace-pre-wrap leading-relaxed">${escapar(textoPrompt)}</span>
+                  </div>
+                `}).join('')}
+              </div>
+
+              <!-- Blocos Boilerplate (Novo) -->
+              ${(ideia.spec_engenharia && ideia.spec_engenharia.boilerplates && ideia.spec_engenharia.boilerplates.length > 0) ? `
+              <div class="mt-8 pt-6 border-t border-[#27272a] pl-2">
+                <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <span class="text-lg">⌨️</span> Base Code (Boilerplate)
+                </h4>
+                <div class="space-y-4">
+                  ${ideia.spec_engenharia.boilerplates.map(bp => `
+                    <div class="bg-[#09090b] rounded-xl overflow-hidden border border-[#27272a]">
+                      <div class="flex justify-between items-center px-4 py-2 border-b border-[#27272a]">
+                        <div class="flex items-center gap-2">
+                          <span class="text-xs font-mono text-zinc-300">${escapar(bp.arquivo)}</span>
+                          <span class="text-[10px] text-zinc-500 uppercase bg-zinc-900 border border-zinc-800 px-1.5 py-0.5 rounded font-bold">${escapar(bp.linguagem)}</span>
+                        </div>
+                        <button onclick="copiarPrompt(this)" data-prompt="${escaparParaAtributo(bp.codigo)}" class="text-[10px] uppercase font-bold tracking-wider bg-zinc-800 hover:bg-emerald-900/50 hover:text-emerald-400 text-zinc-300 px-3 py-1.5 rounded-lg border border-[#27272a] transition-colors">📋 Copiar Código</button>
+                      </div>
+                      <div class="p-4 overflow-x-auto">
+                        <pre><code class="text-[13px] text-zinc-300 font-mono whitespace-pre">${escapar(bp.codigo)}</code></pre>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        // Render padrão antigo
+        modalBodyHtml = `
+          <div class="space-y-5 flex-1 overflow-y-auto">
+            ${anexosModalHtml}
+            <div>
+              <h4 class="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Descrição</h4>
+              <p class="text-sm text-zinc-300 leading-relaxed">${escapar(ideia.descricao || '')}</p>
+            </div>
+
+            ${detalhesHtml ? `<div>
+              <h4 class="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Detalhes</h4>
+              <ul class="space-y-1.5 pl-2">${detalhesHtml}</ul>
+            </div>` : ''}
+
+            ${passosHtml ? `<div>
+              <h4 class="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-3">Próximos Passos</h4>
+              <div class="space-y-3">${passosHtml}</div>
+            </div>` : ''}
+
+            ${tagsHtml ? `<div>
+              <h4 class="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Tags</h4>
+              <div class="flex flex-wrap gap-2">${tagsHtml}</div>
+            </div>` : ''}
+
+            <div>
+              <h4 class="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Ideia Original</h4>
+              <p class="text-sm text-zinc-400 bg-black border border-[#27272a] rounded-xl p-4 leading-relaxed font-mono">"${escapar(ideia.texto_original || '')}"</p>
+            </div>
+          </div>
+        `;
+      }
+
+      document.getElementById('modal-ideia-content').innerHTML = `
+    <div class="flex items-start justify-between gap-4 mb-4">
+      <div>
+        <div class="flex gap-2 items-center mb-2">
+          <span class="text-xs px-2 py-0.5 rounded-full badge-${ideia.tipo === 'Fábrica de App' ? 'outro' : ideia.tipo}">${ideia.tipo === 'Fábrica de App' ? 'Fábrica de App 🚀' : (TIPO_LABEL[ideia.tipo] || ideia.tipo)}</span>
+          <span class="text-xs text-indigo-400">${PRIO_LABEL[ideia.prioridade] || ''}</span>
+          
+          <!-- Status Dropdown -->
+          <select onchange="atualizarStatusIdeia(${ideia.id}, this.value)" class="text-xs px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-[#27272a] hover:border-zinc-500 focus:border-indigo-500 outline-none ml-1 transition cursor-pointer appearance-none">
+            <option value="Caixa de Entrada" ${(!ideia.status || ideia.status === 'Caixa de Entrada') ? 'selected' : ''}>📥 Caixa de Entrada</option>
+            <option value="Em Refinamento" ${ideia.status === 'Em Refinamento' ? 'selected' : ''}>✍️ Em Refinamento</option>
+            <option value="Pronto p/ Code" ${ideia.status === 'Pronto p/ Code' ? 'selected' : ''}>✅ Pronto p/ Code</option>
+            <option value="Em Produção" ${ideia.status === 'Em Produção' ? 'selected' : ''}>🚀 Em Produção</option>
+            <option value="Arquivado" ${ideia.status === 'Arquivado' ? 'selected' : ''}>🗄️ Arquivado</option>
+          </select>
+        </div>
+        <h2 class="font-bold text-lg text-white">${escapar(ideia.titulo || '')}</h2>
+        <p class="text-xs text-indigo-400 mt-1">${proj ? `${proj.emoji} ${proj.nome}` : ''} · ${new Date(ideia.criado).toLocaleString('pt-BR')}</p>
+      </div>
+      <div>
+         <button onclick="exportarComoSkill(${ideia.id})" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-teal-800/50 hover:bg-teal-700/50 text-teal-300 border border-teal-700/50 transition">
+           ⬇️ Exportar ${ideia.tipo === 'Fábrica de App' ? 'Master Script' : 'IA Skill'}
+         </button>
+      </div>
+    </div>
+    ${modalBodyHtml}
+  `;
+      document.getElementById('modal-ideia').classList.remove('hidden');
+    }
+
+    async function atualizarStatusIdeia(id, novoStatus) {
+      const ideia = ideias.find(i => i.id === id);
+      if (!ideia) return;
+
+      ideia.status = novoStatus;
+      renderizarIdeias(); // Atualiza a tela imediatamente (importante para lista e board)
+
+      try {
+        await fetch(`${API_URL}/ideias/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: novoStatus })
+        });
+      } catch (err) {
+        console.error('Erro ao atualizar status', err);
+        mostrarToast('Erro ao atualizar servidor', 'erro');
+      }
+    }
+
+    function fecharModalIdeia(e) {
+      if (e.target === document.getElementById('modal-ideia')) {
+        document.getElementById('modal-ideia').classList.add('hidden');
+      }
+    }
+
+    function deletarIdeia(id) {
+      ideias = ideias.filter(i => i.id !== id);
+      salvarIdeias();
+      renderizarSidebar();
+      renderizarIdeias();
+      mostrarToast('Ideia removida');
+    }
+
+    // ─── Export ────────────────────────────────────────────────────────────────
+    function exportarTudo() {
+      let md = '# IdeaOrganizer — Backup\n\n';
+      projetos.forEach(proj => {
+        const pIdeias = ideias.filter(i => i.projeto_id === proj.id);
+        if (!pIdeias.length) return;
+        md += `## ${proj.emoji} ${proj.nome}\n${proj.desc ? `_${proj.desc}_\n` : ''}\n`;
+        pIdeias.forEach(ideia => {
+          md += `### ${TIPO_LABEL[ideia.tipo] || ideia.tipo}: ${ideia.titulo}\n`;
+          md += `**Prioridade:** ${ideia.prioridade} | **Data:** ${new Date(ideia.criado).toLocaleDateString('pt-BR')}\n\n`;
+          md += `${ideia.descricao}\n\n`;
+          if ((ideia.detalhes || []).length) md += (ideia.detalhes.map(d => `- ${d}`).join('\n') + '\n\n');
+          if ((ideia.proximos_passos || []).length) {
+            md += `**Próximos passos:**\n${ideia.proximos_passos.map((p, i) => `${i + 1}. ${p}`).join('\n')}\n\n`;
+          }
+        });
+      });
+      const blob = new Blob([md], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'ideias-backup.md'; a.click();
+      URL.revokeObjectURL(url);
+      mostrarToast('Backup exportado!');
+    }
+
+    function exportarComoSkill(id) {
+      const ideia = ideias.find(i => i.id === id);
+      if (!ideia) return;
+      const proj = projetos.find(p => p.id === ideia.projeto_id);
+
+      let fileName = ideia.titulo.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      if (!fileName) fileName = 'ideia-skill';
+      fileName += '.md';
+
+      if (ideia.tipo === 'Fábrica de App') {
+        const prd = ideia.spec_produto || {};
+        const arq = ideia.spec_arquitetura || {};
+        const scout = ideia.spec_tecnologia || {};
+
+        const eng = ideia.spec_engenharia || {};
+
+        md = `---
+name: "${ideia.titulo.replace(/"/g, "'")} - Master Script"
+description: "Script Mestre gerado pela Fábrica Autônoma de Software."
+---
+
+# 🚀 PROJETO MESTRE: ${ideia.titulo}
+
+> **INSTRUÇÃO PARA A IA (ANTIGRAVITY / CLAUDE):**
+> Você é o desenvolvedor encarregado de construir este projeto. Este documento contém toda a arquitetura necessária.
+> Sua única missão agora é ir para a seção **"🎬 SEQUÊNCIA DE PROMPTS"** no final deste documento e executar cada passo seqüencialmente. Confirme comigo ao final de cada etapa para prosseguir para a próxima. O uso de ferramentas (MCPs e APIs listadas) é estrito.
+
+---
+
+## 1. 📊 PRD (Product Requirement Document)
+**Visão Geral:** 
+${prd.visao_geral || ''}
+
+**Público Alvo:**
+${(prd.publico_alvo || []).map(p => `- ${p}`).join('\n')}
+
+**Core Features:**
+${(prd.core_features || []).map(f => `- ${f}`).join('\n')}
+
+**Métricas de Sucesso:**
+${(prd.metricas_sucesso || []).map(m => `- ${m}`).join('\n')}
+
+---
+
+## 2. 🏗️ Arquitetura de Software
+**Estrutura de Dados:**
+${(arq.banco_de_dados || []).map(t => `- \`${t}\``).join('\n')}
+
+**Fluxo de Usuário (UX):**
+${(arq.fluxo_usuario || []).join(' ➔ ')}
+
+**APIs e Serviços Necessários:**
+${(arq.apis_necessarias || []).map(a => `- ${a}`).join('\n')}
+
+---
+
+## 3. 🔍 Ferramentas & MCPs (Scout Tech)
+**Integrações Recomendadas:**
+${(scout.ferramentas_sugeridas || []).map(f => `- **${f.nome}**: ${f.motivo}`).join('\n')}
+
+**Atenção aos Riscos:**
+${(scout.riscos_tecnicos || []).map(r => `- ⚠️ ${r}`).join('\n')}
+
+---
+
+## 4. ⚙️ Engenharia & Boilerplate
+**Stack Escolhida:**
+- Frontend: ${eng.stack_escolhida?.frontend || 'N/A'}
+- Backend: ${eng.stack_escolhida?.backend || 'N/A'}
+- Mobile: ${eng.stack_escolhida?.mobile || 'N/A'}
+
+**Justificativa:** 
+${eng.justificativa || ''}
+
+${(eng.boilerplates || []).length > 0 ? `**Boilerplates Iniciais:**\n` + eng.boilerplates.map(bp => `**Arquivo: \`${bp.arquivo}\`**\n\`\`\`${bp.linguagem}\n${bp.codigo}\n\`\`\``).join('\n\n') : ''}
+
+---
+
+## 5. 🎬 SEQUÊNCIA DE PROMPTS (EXECUTE NA ORDEM)
+Siga estritamente este roteiro. Após terminar o Prompt 1 com sucesso, peça permissão para iniciar o Prompt 2, e assim por diante.
+
+${(ideia.spec_tarefas || ideia.proximos_passos || []).map((p, i) => `### Passo ${i + 1}:\n\`\`\`text\n${p}\n\`\`\`\n`).join('\n')}
+`;
+      } else {
+        // Skill Padrão Antiga
+        md = `---
+name: "${ideia.titulo.replace(/"/g, "'")}"
+description: "${(ideia.descricao || '').replace(/"/g, "'")}"
+---
+
+# Contexto e Objetivo
+Esta diretriz estrutural foi criada no IdeaOrganizer para o projeto **${proj ? proj.nome : 'Sem Projeto'}**.
+Use este arquivo de skill para formatar, planejar e executar o desenvolvimento baseado nestes parâmetros.
+
+## Descrição Principal
+${ideia.descricao || ''}
+`;
+
+        if (ideia.detalhes && ideia.detalhes.length > 0) {
+          md += `\n## Detalhes / Requisitos\n` + ideia.detalhes.map(d => `- ${d}`).join('\n') + '\n';
+        }
+
+        if (ideia.proximos_passos && ideia.proximos_passos.length > 0) {
+          md += `\n## Próximos Passos Sugeridos\n` + ideia.proximos_passos.map((p, i) => `${i + 1}. ${p}`).join('\n') + '\n';
+        }
+
+        if (ideia.tags && ideia.tags.length > 0) {
+          md += `\n## Escopo Técnico / Tags\n` + ideia.tags.map(t => `\`${t}\``).join(' ') + '\n';
+        }
+      }
+
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = fileName; a.click();
+      URL.revokeObjectURL(url);
+
+      fecharModalIdeia({ target: document.getElementById('modal-ideia') });
+      mostrarToast('Skill exportada! Salve na pasta de skills do Claude.');
+    }
+
+    // ─── Loading ───────────────────────────────────────────────────────────────
+    function mostrarLoading(msg, sub) {
+      document.getElementById('loading-msg').textContent = msg;
+      document.getElementById('loading-sub').textContent = sub;
+      document.getElementById('loading-global').classList.remove('hidden');
+      document.getElementById('loading-global').classList.add('flex');
+      document.getElementById('grid-ideias').classList.add('hidden');
+      document.getElementById('area-vazia').classList.add('hidden');
+    }
+
+    function esconderLoading() {
+      document.getElementById('loading-global').classList.add('hidden');
+      document.getElementById('loading-global').classList.remove('flex');
+      document.getElementById('grid-ideias').classList.remove('hidden');
+    }
+
+    // ─── Config ────────────────────────────────────────────────────────────────
+    function inicializarSidebarConfig() {
+      const prov = localStorage.getItem('io_provedor') || _provedor;
+      const sel = document.getElementById('provedor-sidebar');
+      if (sel) sel.value = prov;
+
+      trocarProvedor(false);
+    }
+
+    function trocarProvedor(showToast = true) {
+      const prov = document.getElementById('provedor-sidebar').value;
+      localStorage.setItem('io_provedor', prov);
+
+      window._provedorAtivo = prov;
+      if (prov === 'gemini') {
+        apiKey = localStorage.getItem('io_gemini_key') || '';
+        modelo = 'gemini-2.5-flash';
+      } else if (prov === 'openai') {
+        apiKey = localStorage.getItem('io_openai_key') || '';
+        modelo = 'gpt-4o';
+      } else if (prov === 'groq') {
+        apiKey = localStorage.getItem('io_groq_key') || '';
+        modelo = 'llama-3.1-8b-instant';
+      } else {
+        apiKey = localStorage.getItem('io_anthropic_key') || '';
+        modelo = 'claude-sonnet-4-6';
+      }
+
+      atualizarStatusApi();
+      if (showToast) mostrarToast(`IA selecionada: ${prov}`);
+    }
+
+    function atualizarStatusApi() {
+      const el = document.getElementById('api-status');
+      if (!el) return;
+      if (apiKey && apiKey.length > 5) {
+        el.className = 'text-xs px-2 py-1.5 w-full bg-green-900/40 border border-green-700/50 rounded-lg text-green-400 text-center font-medium mt-1 inline-block';
+        el.textContent = '✓ IA Pronta para Uso';
+        el.classList.remove('hidden');
+      } else {
+        el.className = 'text-xs px-2 py-1.5 w-full bg-red-900/40 border border-red-700/50 rounded-lg text-red-300 text-center font-medium mt-1 cursor-pointer inline-block';
+        el.textContent = '⚠ Configurar Chave de API';
+        el.onclick = abrirConfig;
+        el.classList.remove('hidden');
+      }
+    }
+
+    function abrirConfig() {
+      document.getElementById('config-gemini-key').value = localStorage.getItem('io_gemini_key') || '';
+      document.getElementById('config-openai-key').value = localStorage.getItem('io_openai_key') || '';
+      document.getElementById('config-groq-key').value = localStorage.getItem('io_groq_key') || '';
+      document.getElementById('config-anthropic-key').value = localStorage.getItem('io_anthropic_key') || '';
+      document.getElementById('modal-config').classList.remove('hidden');
+      document.getElementById('modal-config').classList.add('flex');
+    }
+
+    function fecharConfig() {
+      document.getElementById('modal-config').classList.add('hidden');
+      document.getElementById('modal-config').classList.remove('flex');
+    }
+
+    function salvarConfig() {
+      const gKey = document.getElementById('config-gemini-key').value.trim();
+      const oKey = document.getElementById('config-openai-key').value.trim();
+      const grKey = document.getElementById('config-groq-key').value.trim();
+      const aKey = document.getElementById('config-anthropic-key').value.trim();
+
+      localStorage.setItem('io_gemini_key', gKey);
+      localStorage.setItem('io_openai_key', oKey);
+      localStorage.setItem('io_groq_key', grKey);
+      localStorage.setItem('io_anthropic_key', aKey);
+
+      trocarProvedor(false);
+      fecharConfig();
+      const provAtual = document.getElementById('provedor-sidebar').value;
+      const chavesDisponiveis = [gKey, oKey, grKey, aKey].some(k => k && k !== '');
+      if (chavesDisponiveis) {
+        mostrarToast('Chaves salvas com sucesso!');
+      } else {
+        mostrarToast(`Por favor insira uma chave`, 'erro');
+      }
+    }
+
+    // ─── Storage ───────────────────────────────────────────────────────────────
+    function salvarProjetos() { localStorage.setItem('io_projetos', JSON.stringify(projetos)); renderizarSidebar(); }
+    function salvarIdeias() { localStorage.setItem('io_ideias', JSON.stringify(ideias)); }
+
+    // ─── Agente Co-criador ─────────────────────────────────────────────────────
+    let chatHistorico = []; // { role: 'user'|'assistant', content: string }
+    let vozChatAtiva = false;
+    let recChat = null;
+
+    function abrirChat() {
+      document.getElementById('painel-chat').classList.remove('hidden');
+      document.getElementById('painel-chat').classList.add('flex');
+      document.getElementById('chat-input').focus();
+    }
+
+    function fecharChat() {
+      document.getElementById('painel-chat').classList.add('hidden');
+      document.getElementById('painel-chat').classList.remove('flex');
+      pararVozChat();
+    }
+
+    function limparChat() {
+      chatHistorico = [];
+      const msgs = document.getElementById('chat-mensagens');
+      msgs.innerHTML = `
+    <div class="bg-indigo-900/30 rounded-xl p-3 border border-indigo-800/40">
+      <p class="text-xs text-indigo-300 leading-relaxed">
+        Conversa reiniciada! Qual é a próxima ideia?
+      </p>
+    </div>`;
+    }
+
+    async function enviarChatMensagem() {
+      const input = document.getElementById('chat-input');
+      const texto = input.value.trim();
+      if (!texto) return;
+      const chavesDisponiveis = [
+        localStorage.getItem('io_gemini_key'),
+        localStorage.getItem('io_openai_key'),
+        localStorage.getItem('io_anthropic_key'),
+        localStorage.getItem('io_groq_key')
+      ].some(k => k && k.trim() !== '');
+
+      if (!chavesDisponiveis) { mostrarToast('Configure uma chave da API ⚙', 'erro'); abrirConfig(); return; }
+
+      input.value = '';
+      pararVozChat();
+
+      // Adiciona mensagem do usuário
+      chatHistorico.push({ role: 'user', content: texto });
+      adicionarBolha('user', texto);
+
+      // Indicador de digitação
+      const idTyping = adicionarBolha('typing', '...');
+
+      try {
+        const ultimaMensagem = chatHistorico[chatHistorico.length - 1].content;
+        const contexto = chatHistorico.slice(0, -1).map(m => `${m.role === 'user' ? 'Usuário' : 'Agente'}: ${m.content}`).join('\n');
+        const userMsg = contexto ? `HISTÓRICO:\n${contexto}\n\nNOVA MENSAGEM:\n${ultimaMensagem}` : ultimaMensagem;
+        const resposta = await callCascata(SYSTEM_COCRIADOR, userMsg);
+
+        chatHistorico.push({ role: 'assistant', content: resposta });
+        document.getElementById(idTyping)?.remove();
+        adicionarBolha('assistant', resposta);
+
+      } catch (err) {
+        document.getElementById(idTyping)?.remove();
+        adicionarBolha('assistant', `Erro: ${err.message}`);
+      }
+    }
+
+    function adicionarBolha(tipo, texto) {
+      const id = 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+      const msgs = document.getElementById('chat-mensagens');
+
+      const html = tipo === 'user'
+        ? `<div id="${id}" class="flex justify-end">
+        <div class="bg-indigo-700/50 rounded-xl rounded-tr-sm px-3 py-2 max-w-[85%]">
+          <p class="text-xs text-indigo-100 leading-relaxed">${escapar(texto)}</p>
+        </div>
+       </div>`
+        : tipo === 'typing'
+          ? `<div id="${id}" class="flex gap-2">
+        <div class="w-6 h-6 rounded-full bg-violet-700/50 flex items-center justify-center text-xs shrink-0">🤖</div>
+        <div class="bg-[#1f1e3a] rounded-xl rounded-tl-sm px-3 py-2">
+          <div class="flex gap-1 items-center h-4">
+            <div class="w-1.5 h-1.5 bg-indigo-400 rounded-full" style="animation:pulse 0.8s ease-in-out infinite"></div>
+            <div class="w-1.5 h-1.5 bg-indigo-400 rounded-full" style="animation:pulse 0.8s ease-in-out 0.2s infinite"></div>
+            <div class="w-1.5 h-1.5 bg-indigo-400 rounded-full" style="animation:pulse 0.8s ease-in-out 0.4s infinite"></div>
+          </div>
+        </div>
+       </div>`
+          : `<div id="${id}" class="flex gap-2 slide-up">
+        <div class="w-6 h-6 rounded-full bg-violet-700/50 flex items-center justify-center text-xs shrink-0 mt-0.5">🤖</div>
+        <div class="bg-[#1f1e3a] rounded-xl rounded-tl-sm px-3 py-2.5 max-w-[85%] border border-[#2a2850]">
+          <p class="text-xs text-indigo-100 leading-relaxed whitespace-pre-wrap">${escapar(texto)}</p>
+        </div>
+       </div>`;
+
+      msgs.insertAdjacentHTML('beforeend', html);
+      msgs.scrollTop = msgs.scrollHeight;
+      return id;
+    }
+
+    function handleChatKeydown(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarChatMensagem(); }
+    }
+
+    async function salvarIdeiaDoChat() {
+      if (chatHistorico.length < 2) { mostrarToast('Desenvolva a ideia primeiro!', 'erro'); return; }
+      const chavesDisponiveis = [
+        localStorage.getItem('io_gemini_key'),
+        localStorage.getItem('io_openai_key'),
+        localStorage.getItem('io_anthropic_key'),
+        localStorage.getItem('io_groq_key')
+      ].some(k => k && k.trim() !== '');
+
+      if (!chavesDisponiveis) { abrirConfig(); return; }
+
+      mostrarToast('Organizando e salvando a ideia...');
+
+      const resumoConversa = chatHistorico.map(m => `${m.role === 'user' ? 'Usuário' : 'Agente'}: ${m.content}`).join('\n\n');
+
+      try {
+        const projetosStr = projetos.map(p => `- ID: ${p.id} | Nome: ${p.nome}`).join('\n');
+        const agentesStr = agentes.map(a => `- ID: ${a.id} | Nome: ${a.nome} | Especialidade: ${a.desc}`).join('\n');
+
+        const resOrq = await callCascata(PROMPT_ORQUESTRADOR(projetosStr, agentesStr), `CONVERSA DE DESENVOLVIMENTO:\n${resumoConversa}`);
+        const orq = extrairJSON(resOrq);
+
+        let projetoId = orq.projeto_id;
+        const agenteEscolhido = agentes.find(a => a.id === orq.agente_id) || agentes[0];
+
+        if (projetoId === 'novo' || !projetos.find(p => p.id === projetoId)) {
+          const novo = { id: Date.now().toString(), nome: orq.projeto_nome || 'Novo Projeto', desc: '', emoji: agenteEscolhido?.emoji || '📱', cor: '#6366f1', criado: new Date().toISOString() };
+          projetos.push(novo);
+          salvarProjetos();
+          projetoId = novo.id;
+        }
+
+        const projNome = projetos.find(p => p.id === projetoId)?.nome || orq.projeto_nome;
+        const resEsp = await callCascata(PROMPT_ESPECIALISTA(agenteEscolhido?.system || 'Você é um Analista Técnico de Produto.'), `CONVERSA DE DESENVOLVIMENTO:\n${resumoConversa}\nPROJETO: ${projNome}`);
+        const esp = extrairJSON(resEsp);
+
+        const novaIdeia = {
+          id: Date.now(), projeto_id: projetoId, tipo: orq.agente_nome || agenteEscolhido.nome,
+          texto_original: `[Co-criado em chat] ${chatHistorico[0]?.content || ''}`,
+          titulo: esp.titulo || orq.resumo, descricao: esp.descricao,
+          detalhes: esp.detalhes || [], prioridade: esp.prioridade || 'media',
+          tags: esp.tags || [], proximos_passos: esp.proximos_passos || [],
+          criado: new Date().toISOString()
+        };
+
+        ideias.unshift(novaIdeia);
+        salvarIdeias();
+        selecionarProjeto(projetoId);
+        fecharChat();
+        mostrarToast(`Ideia salva em "${projNome}"!`);
+      } catch (err) {
+        mostrarToast(`Erro ao salvar: ${err.message}`, 'erro');
+      }
+    }
+
+    // ─── Voz para o Chat ───────────────────────────────────────────────────────
+    function toggleVozChat() {
+      if (vozChatAtiva) { pararVozChat(); return; }
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) { mostrarToast('Voz não suportada neste browser', 'erro'); return; }
+
+      recChat = new SpeechRecognition();
+      recChat.lang = 'pt-BR';
+      recChat.continuous = true;
+      recChat.interimResults = true;
+      let chatTextoAnterior = document.getElementById('chat-input').value;
+
+      recChat.onresult = (e) => {
+        let interim = '';
+        let final = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const transcript = e.results[i][0].transcript;
+          if (e.results[i].isFinal) final += transcript + ' ';
+          else interim += transcript;
+        }
+        document.getElementById('chat-input').value = chatTextoAnterior + final + interim;
+        if (final) chatTextoAnterior = chatTextoAnterior + final;
+      };
+
+      recChat.onerror = (e) => {
+        if (e.error === 'not-allowed') mostrarToast('Permissão de microfone negada', 'erro');
+        pararVozChat();
+      };
+      recChat.onend = () => { if (vozChatAtiva) pararVozChat(); };
+      recChat.start();
+
+      vozChatAtiva = true;
+      const btn = document.getElementById('btn-voz-chat');
+      btn.className = 'text-xs px-2 py-1 rounded-lg bg-red-900/60 hover:bg-red-800 transition text-red-300';
+      btn.textContent = '⏹ Parar';
+    }
+
+    function pararVozChat() {
+      if (recChat) { recChat.stop(); recChat = null; }
+      vozChatAtiva = false;
+      const btn = document.getElementById('btn-voz-chat');
+      if (btn) { btn.className = 'text-xs px-2 py-1 rounded-lg bg-indigo-900/60 hover:bg-indigo-800 transition text-indigo-400'; btn.textContent = '🎙 Falar'; }
+    }
+
+    // ─── Voz (Web Speech API) ──────────────────────────────────────────────────
+    let reconhecimento = null;
+    let gravando = false;
+    let textoAnterior = '';
+
+    function toggleVoz() {
+      if (gravando) { pararVoz(); return; }
+      iniciarVoz();
+    }
+
+    function iniciarVoz() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        document.getElementById('aviso-voz').classList.remove('hidden');
+        return;
+      }
+
+      reconhecimento = new SpeechRecognition();
+      reconhecimento.lang = 'pt-BR';
+      reconhecimento.continuous = true;
+      reconhecimento.interimResults = true;
+
+      textoAnterior = document.getElementById('input-ideia').value;
+
+      reconhecimento.onresult = (e) => {
+        let interim = '';
+        let final = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const transcript = e.results[i][0].transcript;
+          if (e.results[i].isFinal) final += transcript + ' ';
+          else interim += transcript;
+        }
+        document.getElementById('input-ideia').value = textoAnterior + final + interim;
+        if (final) textoAnterior = textoAnterior + final;
+      };
+
+      reconhecimento.onerror = (e) => {
+        console.error('Voz erro:', e.error);
+        pararVoz();
+        if (e.error === 'not-allowed') mostrarToast('Permissão de microfone negada', 'erro');
+      };
+
+      reconhecimento.onend = () => { if (gravando) pararVoz(); };
+
+      reconhecimento.start();
+      gravando = true;
+      document.getElementById('btn-voz').className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-900/60 hover:bg-red-800/60 transition text-xs text-red-300';
+      document.getElementById('icone-voz').textContent = '⏹';
+      document.getElementById('label-voz').textContent = 'Parar';
+      document.getElementById('gravando-badge').classList.remove('hidden');
+      document.getElementById('gravando-badge').classList.add('flex');
+    }
+
+    function pararVoz() {
+      if (reconhecimento) { reconhecimento.stop(); reconhecimento = null; }
+      gravando = false;
+      document.getElementById('btn-voz').className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-900/60 hover:bg-indigo-800/60 transition text-xs text-indigo-300';
+      document.getElementById('icone-voz').textContent = '🎙';
+      document.getElementById('label-voz').textContent = 'Falar';
+      document.getElementById('gravando-badge').classList.add('hidden');
+      document.getElementById('gravando-badge').classList.remove('flex');
+    }
+
+    // ─── Utils ─────────────────────────────────────────────────────────────────
+    function escapar(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function escaparParaAtributo(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function copiarPrompt(btn) {
+      const texto = btn.getAttribute('data-prompt');
+      navigator.clipboard.writeText(texto).then(() => {
+        const original = btn.innerHTML;
+        btn.innerHTML = '✅ Copiado!';
+        btn.classList.add('!bg-green-600', '!text-white', '!opacity-100');
+        setTimeout(() => {
+          btn.innerHTML = original;
+          btn.classList.remove('!bg-green-600', '!text-white', '!opacity-100');
+        }, 2000);
+      }).catch(err => {
+        mostrarToast('Erro ao copiar: ' + err, 'erro');
+      });
+    }
+
+    function mostrarToast(msg, tipo = 'ok') {
+      document.getElementById('toast')?.remove();
+      const t = document.createElement('div');
+      t.id = 'toast';
+      t.className = `fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl text-sm font-medium slide-up
+    ${tipo === 'erro' ? 'bg-red-950 border border-red-700 text-red-200' : 'bg-[#1f1e3a] border border-indigo-700/50 text-indigo-100'}`;
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3000);
+    }
+
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('open');
+    }
+
+    function handleKeydown(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') capturarIdeia();
+    }
+
+    // Fechar modais
+    document.getElementById('modal-projeto').addEventListener('click', e => {
+      if (e.target === e.currentTarget) fecharModalProjeto();
+    });
+    document.getElementById('modal-config').addEventListener('click', e => {
+      if (e.target === e.currentTarget) fecharConfig();
+    });
+  </script>
+</body>
+
+</html>
