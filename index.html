@@ -749,7 +749,9 @@
   <script src="skills_data.js"></script>
   <script>
     // ─── Estado Global ─────────────────────────────────────────────────────────
-    const API_URL = 'http://localhost:3000/api'; // Desenvolvimento Local (Staging)
+    const API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      ? 'http://localhost:3000/api'
+      : 'https://fabrica-ia-api.onrender.com/api';
     let apikeyBackup = localStorage.getItem('io_gemini_key') || '';
     let apiKey = apikeyBackup;
     let dadosSalvos = carregarDadosLocais();
