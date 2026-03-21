@@ -190,8 +190,9 @@ app.use(express.static(path.join(__dirname, '..')));
 
 // Middleware: valida chave da Fábrica
 function verificarChaveFabrica(req, res, next) {
-    const chave = req.headers['x-chave-fabrica'];
-    if (!chave || chave !== process.env.CHAVE_SECRETA_DA_API) {
+    const chave = (req.headers['x-chave-fabrica'] || '').trim();
+    const esperada = (process.env.CHAVE_SECRETA_DA_API || '').trim();
+    if (!chave || chave !== esperada) {
         return res.status(401).json({ error: 'Chave da Fábrica inválida' });
     }
     next();
