@@ -297,9 +297,14 @@
     // ═══════════════════════════════════════════════
     // CONFIGURAÇÃO
     // ═══════════════════════════════════════════════
-    const API_BASE = window.location.origin;
-    const CHAVE = localStorage.getItem('fabrica_chave') || prompt('Insira a chave da Fábrica (x-chave-fabrica):') || '';
-    if (CHAVE) localStorage.setItem('fabrica_chave', CHAVE);
+    // Se estiver rodando local (localhost/127) usa origin, senão aponta pro Render
+    const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      ? window.location.origin
+      : 'https://qg-ia-nexus.onrender.com';
+
+    // Chave da fábrica — não usa prompt() no load (bloqueia página em alguns browsers)
+    let CHAVE = localStorage.getItem('fabrica_chave') || 'qgia-fabrica-2026';
+    localStorage.setItem('fabrica_chave', CHAVE);
 
     let resultadoAtual = null;
 
