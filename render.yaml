@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: fabrica-ia-api
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node server.js
+    plan: free
+    region: oregon
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MODO_TESTE
+        value: "true"
+      - key: AGENTES_ATIVOS
+        value: "true"
+      - key: CHAVE_SECRETA_DA_API
+        value: qgia-fabrica-2026
+      - key: CRON_SECRET
+        value: qgia-cron-2026
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
