@@ -1,5 +1,5 @@
 /**
- * server.js — IdeaOrganizer QG Server v3.0
+ * server.js — IdeaOrganizer QG Server v4.0
  *
  * Backend completo da Fábrica de IA:
  * - CRUD de projetos, ideias, agentes, skills, memórias
@@ -64,6 +64,8 @@ function inicializarSQLite() {
         db.run(`CREATE TABLE IF NOT EXISTS agentes (id TEXT PRIMARY KEY, nome TEXT NOT NULL, desc TEXT, system TEXT, emoji TEXT)`);
         db.run(`CREATE TABLE IF NOT EXISTS skills (id TEXT PRIMARY KEY, nome TEXT NOT NULL, desc TEXT, prompt TEXT)`);
         db.run(`CREATE TABLE IF NOT EXISTS memorias (id TEXT PRIMARY KEY, agente TEXT NOT NULL, conteudo TEXT NOT NULL, projeto_rel TEXT, criado TEXT)`);
+        db.run(`CREATE TABLE IF NOT EXISTS projetos_fabrica (id TEXT PRIMARY KEY, usuario_id TEXT, nome TEXT, tipo TEXT, tipo_entregavel TEXT, ideia_original TEXT, status TEXT, score_final INTEGER, iteracoes INTEGER, aprovado INTEGER, plano TEXT, arquitetura TEXT, codigo_sql TEXT, codigo_app TEXT, codigo_ui TEXT, planilha TEXT, documento TEXT, design_system TEXT, auditoria TEXT, tempo_total_ms INTEGER, criado_em TEXT)`);
+        db.run(`CREATE TABLE IF NOT EXISTS agent_memories (id TEXT PRIMARY KEY, agente_id TEXT NOT NULL, usuario_id TEXT, projeto_id TEXT, tipo_memoria TEXT, conteudo TEXT, metadata TEXT, relevancia REAL DEFAULT 1.0, vezes_usada INTEGER DEFAULT 0, criado_em TEXT)`);
         console.log('📦 Tabelas SQLite carregadas.');
     });
 }
@@ -206,9 +208,9 @@ app.get('/fabrica', (req, res) => {
 app.get('/api/status', (req, res) => {
     res.json({
         status: 'Online',
-        message: 'IdeaOrganizer QG Server v3.0 está rodando!',
+        message: 'IdeaOrganizer QG Server v4.0 está rodando!',
         banco: supabase ? 'Supabase' : 'SQLite',
-        versao: '3.0.0',
+        versao: '4.0.0',
         modo_teste: sistemaControle.modoTeste,
         agentes_ativos: sistemaControle.agentesAtivos,
         pipelines_em_execucao: sistemaControle.pipelinesEmExecucao
