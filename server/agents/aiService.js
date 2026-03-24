@@ -55,8 +55,13 @@ const PROVEDORES = [
     {
         nome: 'Gemini',
         ativo: () => !!process.env.GEMINI_API_KEY,
-        chamar: async (system, user, maxTokens) => {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
+        chamar: async (system, user, maxTokens, opcoes = {}) => {
+            // Seleciona modelo por complexidade — todos grátis
+            // simples/media → gemini-2.0-flash | complexa → gemini-2.5-flash
+            const modelo = opcoes.modelo || (
+                opcoes.complexidade === 'complexa' ? 'gemini-2.5-flash' : 'gemini-2.0-flash'
+            );
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${process.env.GEMINI_API_KEY}`;
             const body = JSON.stringify({
                 contents: [{ parts: [{ text: `${system}\n\n${user}` }] }],
                 generationConfig: { maxOutputTokens: maxTokens, temperature: 0.7 }
@@ -70,7 +75,7 @@ const PROVEDORES = [
         ativo: () => !!process.env.GROQ_API_KEY,
         chamar: async (system, user, maxTokens) => {
             const body = JSON.stringify({
-                model: 'llama-3.1-8b-instant',
+                model: 'llama-3.3-70b-versatile',
                 messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
                 max_tokens: maxTokens, temperature: 0.7
             });
@@ -85,7 +90,7 @@ const PROVEDORES = [
         ativo: () => !!process.env.ANTHROPIC_API_KEY,
         chamar: async (system, user, maxTokens) => {
             const body = JSON.stringify({
-                model: 'claude-haiku-4-5-20251001',
+                model: 'claude-3-5-sonnet-20241022',
                 max_tokens: maxTokens,
                 system: system,
                 messages: [{ role: 'user', content: user }]

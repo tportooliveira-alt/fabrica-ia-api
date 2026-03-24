@@ -27,6 +27,7 @@ const fixer      = require('../agents/fixer');
 const CoderChief = require('../agents/CoderChief');
 const AgentMemory = require('./AgentMemory');
 const PipelineManager = require('./PipelineManager');
+const ContextRouter = require('./ContextRouter');
 const { listarProvedoresAtivos } = require('../agents/aiService');
 
 const MAX_ITERACOES   = 4;
@@ -41,6 +42,12 @@ async function executar(ideia, pipelineId, usuario_id, emit) {
            mensagem: `Fábrica de IA iniciada | Provedores: ${listarProvedoresAtivos().join(', ')}` });
 
     try {
+        // ── PRÉ: Detectar domínio + distribuir contextos mínimos ──────────
+        const roteamento = ContextRouter.distribuirContextos(ideia, 'media');
+        emit({ tipo: 'dominio_detectado', progresso: 2,
+               mensagem: `Domínio: ${roteamento.dominio} (confiança: ${roteamento.confianca}) | Modelo: ${roteamento.modelo_gemini.modelo}`,
+               dados: { dominio: roteamento.dominio, confianca: roteamento.confianca } });
+
         // ── PRÉ: Carregar contexto da memória ─────────────────────────────
         const [memorias] = await Promise.all([
             AgentMemory.buscarRecentes(usuario_id, 5)
@@ -54,7 +61,7 @@ async function executar(ideia, pipelineId, usuario_id, emit) {
         emit({ tipo: 'agente_ativo', agente: 'Analista', fase: 1, progresso: 5,
                mensagem: '🧪 Analisando e extraindo requisitos...' });
 
-        const spec = await analyst.analisarConversa([{ role: 'user', content: ideia }]);
+        const spec = await analyst.analisarConversa([{ role: 'user', content: ideia }], roteamento.contextos.analista);
         const ideiaOtimizada = spec.prompt_perfeito || ideia;
 
         emit({ tipo: 'agente_concluido', agente: 'Analista', fase: 1, progresso: 12,
@@ -66,7 +73,7 @@ async function executar(ideia, pipelineId, usuario_id, emit) {
         emit({ tipo: 'agente_ativo', agente: 'Comandante', fase: 1, progresso: 12,
                mensagem: '🎖️ Montando plano estratégico...' });
 
-        const plano = await commander.analisar(ideiaOtimizada);
+        const plano = await commander.analisar(ideiaOtimizada, roteamento.contextos.comandante);
 
         emit({ tipo: 'agente_concluido', agente: 'Comandante', fase: 1, progresso: 22,
                mensagem: `Plano: "${plano.nome_sugerido}" | ${plano.tipo_projeto} | ${plano.complexidade}`,
@@ -79,13 +86,17 @@ async function executar(ideia, pipelineId, usuario_id, emit) {
         emit({ tipo: 'fase_iniciada', fase: 2, progresso: 22,
                mensagem: '⚡ Arquiteto e Designer trabalhando em paralelo...' });
 
+        // Ajusta complexidade real baseada no plano do comandante
+        const complexidadeReal = plano.complexidade || 'media';
+        const roteamentoFinal  = ContextRouter.distribuirContextos(ideia, complexidadeReal);
+
         const [arquitetura, designConceito] = await Promise.all([
-            architect.projetar(plano).then(r => {
+            architect.projetar(plano, roteamentoFinal.contextos.arquiteto).then(r => {
                 emit({ tipo: 'agente_concluido', agente: 'Arquiteto', progresso: 35,
                        mensagem: `${r.tabelas?.length || 0} tabelas, ${r.endpoints?.length || 0} endpoints` });
                 return r;
             }),
-            designer.projetarUI(plano).then(r => {
+            designer.projetarUI(plano, roteamentoFinal.contextos.designer).then(r => {
                 emit({ tipo: 'agente_concluido', agente: 'Designer-Conceito', progresso: 32,
                        mensagem: 'Conceito visual definido' });
                 return r;
